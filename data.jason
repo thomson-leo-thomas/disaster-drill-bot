@@ -1,0 +1,30 @@
+[
+  {
+    "scenario": "You're in school. A fire starts. What do you do?",
+    "A": "Run upstairs",
+    "B": "Call family",
+    "C": "Evacuate calmly",
+    "D": "Hide under desk",
+    "correct": "C",
+    "feedback": {
+      "A": "?? Dangerous—fire goes upward.",
+      "B": "?? Delay may be fatal.",
+      "C": "? Correct! Calm evacuation is safest.",
+      "D": "? Never hide in fires."
+    }
+  },
+  {
+    "scenario": "Earthquake strikes while you're indoors. What's your move?",
+    "A": "Run outside immediately",
+    "B": "Take cover under furniture",
+    "C": "Stand near windows",
+    "D": "Scream for help",
+    "correct": "B",
+    "feedback": {
+      "A": "Unsafe to run",
+      "B": "? Best option",
+      "C": "Glass can break",
+      "D": "Panic wastes time"
+    }
+  }
+]
