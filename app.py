@@ -13,31 +13,14 @@ BOT_TOKEN = os.environ['BOT_TOKEN']
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "securetoken123")
 TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}/"
 
-# === Load Questions and Mythbusters ===
+# === Load Data ===
 with open("data.json", "r", encoding="utf-8") as file:
     SCENARIOS = json.load(file)
 
 with open("mythbusters.json", "r", encoding="utf-8") as mythfile:
     MYTHBUSTERS = json.load(mythfile)
 
-# === Database Setup ===
-db = sqlite3.connect("users.db", check_same_thread=False)
-cursor = db.cursor()
-cursor.execute('''CREATE TABLE IF NOT EXISTS users (
-    chat_id INTEGER PRIMARY KEY,
-    xp INTEGER DEFAULT 0,
-    streak INTEGER DEFAULT 0,
-    rank TEXT DEFAULT '🐣 Trainee Responder',
-    last_active TEXT,
-    completed_today INTEGER DEFAULT 0
-)''')
-cursor.execute('''CREATE TABLE IF NOT EXISTS answers (
-    chat_id INTEGER,
-    scenario TEXT
-)''')
-db.commit()
-
-# === Ranks ===
+# === Level Titles ===
 LEVELS = [
     (0, "🐣 Trainee Responder"),
     (50, "🛡️ Alert Apprentice"),
@@ -50,48 +33,50 @@ LEVELS = [
     (2000, "🔱 Guardian of Calm")
 ]
 
+# === SQLite Setup ===
+conn = sqlite3.connect("users.db", check_same_thread=False)
+c = conn.cursor()
+c.execute('''CREATE TABLE IF NOT EXISTS users (
+    chat_id INTEGER PRIMARY KEY,
+    xp INTEGER,
+    streak INTEGER,
+    rank TEXT,
+    completed_today INTEGER,
+    last_active TEXT
+)''')
+conn.commit()
+
 # === Helper Functions ===
 def send_message(chat_id, text, reply_markup=None):
-    payload = {
-        "chat_id": chat_id,
-        "text": text,
-        "parse_mode": "Markdown"
-    }
+    url = TELEGRAM_API + "sendMessage"
+    payload = {"chat_id": chat_id, "text": text, "parse_mode": "Markdown"}
     if reply_markup:
         payload["reply_markup"] = reply_markup
-    requests.post(TELEGRAM_API + "sendMessage", json=payload)
+    requests.post(url, json=payload)
 
 def get_user(chat_id):
-    cursor.execute("SELECT * FROM users WHERE chat_id = ?", (chat_id,))
-    user = cursor.fetchone()
-    if not user:
-        today = datetime.utcnow().date().isoformat()
-        cursor.execute("INSERT INTO users (chat_id, last_active) VALUES (?, ?)", (chat_id, today))
-        db.commit()
-        return (chat_id, 0, 0, "🐣 Trainee Responder", today, 0)
-    return user
+    c.execute("SELECT * FROM users WHERE chat_id=?", (chat_id,))
+    row = c.fetchone()
+    if not row:
+        c.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?)", (chat_id, 0, 0, LEVELS[0][1], 0, str(datetime.utcnow().date())))
+        conn.commit()
+        return get_user(chat_id)
+    return row
 
-def update_user(chat_id, xp=None, streak=None, rank=None, completed_today=None):
-    updates = []
-    params = []
+def update_user(chat_id, xp=None, streak=None, rank=None, completed_today=None, last_active=None):
+    user = list(get_user(chat_id))
     if xp is not None:
-        updates.append("xp = ?")
-        params.append(xp)
+        user[1] = xp
     if streak is not None:
-        updates.append("streak = ?")
-        params.append(streak)
+        user[2] = streak
     if rank is not None:
-        updates.append("rank = ?")
-        params.append(rank)
+        user[3] = rank
     if completed_today is not None:
-        updates.append("completed_today = ?")
-        params.append(completed_today)
-    if updates:
-        updates.append("last_active = ?")
-        params.append(datetime.utcnow().date().isoformat())
-        params.append(chat_id)
-        cursor.execute(f"UPDATE users SET {', '.join(updates)} WHERE chat_id = ?", tuple(params))
-        db.commit()
+        user[4] = int(completed_today)
+    if last_active is not None:
+        user[5] = last_active
+    c.execute("REPLACE INTO users VALUES (?, ?, ?, ?, ?, ?)", tuple(user))
+    conn.commit()
 
 def get_level(xp):
     for points, title in reversed(LEVELS):
@@ -99,15 +84,8 @@ def get_level(xp):
             return title
     return LEVELS[0][1]
 
-def has_answered(chat_id, scenario):
-    cursor.execute("SELECT 1 FROM answers WHERE chat_id = ? AND scenario = ?", (chat_id, scenario))
-    return cursor.fetchone() is not None
+user_sessions = {}
 
-def mark_answered(chat_id, scenario):
-    cursor.execute("INSERT INTO answers (chat_id, scenario) VALUES (?, ?)", (chat_id, scenario))
-    db.commit()
-
-# === Webhook ===
 @app.route("/", methods=["POST"])
 def webhook():
     data = request.get_json()
@@ -118,108 +96,122 @@ def webhook():
     if not chat_id:
         return "No chat ID", 200
 
+    session = user_sessions.setdefault(chat_id, {
+        "questions": [],
+        "answered": set(),
+        "count": 0,
+        "current_q": None
+    })
+
     user = get_user(chat_id)
-    xp, streak, rank, last_active, completed_today = user[1:]
-    today = datetime.utcnow().date().isoformat()
+    xp, streak, rank, completed_today, last_active = user[1], user[2], user[3], bool(user[4]), user[5]
 
-    if last_active != today:
+    today = str(datetime.utcnow().date())
+    if today != last_active:
         streak = streak + 1 if completed_today else 0
-        update_user(chat_id, streak=streak, completed_today=0)
-        cursor.execute("DELETE FROM answers WHERE chat_id = ?", (chat_id,))
-        db.commit()
+        update_user(chat_id, completed_today=0, streak=streak, last_active=today)
+        session["questions"] = []
+        session["answered"] = set()
+        session["count"] = 0
+        session["current_q"] = None
 
-    if user_text.lower() == "/start":
+    cmd = user_text.strip().lower()
+
+    if cmd == "/start":
         send_message(chat_id, "🚨 *Welcome to Disaster Sensei* 🚨\nYour personal dojo for disaster readiness.\n\nType /drill to begin today’s challenge.")
 
-    elif user_text.lower() == "/drill":
-        if completed_today:
-            send_message(chat_id, "🌞 You’ve mastered today’s drills already. Come back tomorrow for more challenges!")
+    elif cmd == "/drill":
+        user = get_user(chat_id)
+        if user[4]:
+            send_message(chat_id, "🌞 You've already completed today's drill.\nCome back tomorrow for a new challenge!")
         else:
-            unanswered = [s for s in SCENARIOS if not has_answered(chat_id, s['scenario'])]
-            if not unanswered:
-                send_message(chat_id, "🎉 You’ve tackled all our scenarios! Well done!")
-                update_user(chat_id, completed_today=1)
+            available = [s for s in SCENARIOS if s['scenario'] not in session["answered"]]
+            if not available:
+                send_message(chat_id, "✅ No more new questions available today!")
                 return "OK"
-            scenario = random.choice(unanswered)
-            mark_answered(chat_id, scenario['scenario'])
+
+            scenario = random.choice(available)
+            session["current_q"] = scenario
+            session["questions"].append(scenario)
+            session["count"] += 1
 
             msg = f"🔥 *Disaster Drill:*\n\n{scenario['scenario']}\n\n"
             msg += f"A: {scenario['A']}\nB: {scenario['B']}\nC: {scenario['C']}\nD: {scenario['D']}"
 
             buttons = {"inline_keyboard": [[
-                {"text": "A", "callback_data": f"A|{scenario['correct']}|{scenario['scenario']}"},
-                {"text": "B", "callback_data": f"B|{scenario['correct']}|{scenario['scenario']}"},
-                {"text": "C", "callback_data": f"C|{scenario['correct']}|{scenario['scenario']}"},
-                {"text": "D", "callback_data": f"D|{scenario['correct']}|{scenario['scenario']}"}
+                {"text": "A", "callback_data": "A"},
+                {"text": "B", "callback_data": "B"},
+                {"text": "C", "callback_data": "C"},
+                {"text": "D", "callback_data": "D"}
             ]]}
             send_message(chat_id, msg, reply_markup=json.dumps(buttons))
 
-    elif "|" in user_text:
-        selected, correct, scen_text = user_text.split("|", 2)
-        scenario = next((s for s in SCENARIOS if s["scenario"] == scen_text), None)
-        if not scenario:
-            send_message(chat_id, "⚠️ Hmm, that scenario vanished into thin air. Try /drill again.")
-            return "OK"
+    elif cmd.upper() in ["A", "B", "C", "D"]:
+        scenario = session.get("current_q")
+        if scenario:
+            if scenario["scenario"] in session["answered"]:
+                send_message(chat_id, "⚠️ Already answered this one, trainee!")
+            else:
+                selected = cmd.upper()
+                session["answered"].add(scenario["scenario"])
+                correct = selected == scenario["correct"]
 
-        feedback = scenario['feedback'].get(selected, "No feedback available.")
+                feedback = scenario["feedback"].get(selected, "Invalid option.")
+                xp_gain = (10 + streak) if correct else 0  # streak multiplier here
+                xp += xp_gain
 
-        if selected == correct:
-            xp += 10
-            feedback += "\n✅ *+10 XP earned!*"
+                new_rank = get_level(xp)
+                rank_up = new_rank != rank
+                rank = new_rank
+
+                msg = feedback
+                if correct:
+                    msg += f"\n✅ You earned *{xp_gain} XP*!"
+                else:
+                    msg += "\n❌ No XP this time."
+
+                if rank_up:
+                    msg += f"\n🌟 Rank Up! Welcome to {rank}"
+
+                update_user(chat_id, xp=xp, rank=rank)
+                send_message(chat_id, msg)
+
+                if session["count"] >= 5:
+                    update_user(chat_id, completed_today=1)
+                    fun_fact = random.choice(MYTHBUSTERS)
+                    summary = f"🎯 *Drill Complete!* You earned {xp} XP today.\n\n📚 *Sensei Wisdom:* {fun_fact}\n\nCome back tomorrow for more survival training."
+                    send_message(chat_id, summary)
+                else:
+                    buttons = {"inline_keyboard": [[{"text": "Next Scenario", "callback_data": "/drill"}]]}
+                    send_message(chat_id, "✅ Ready for your next test?", reply_markup=json.dumps(buttons))
         else:
-            feedback += "\n❌ No XP this time."
+            send_message(chat_id, "❗️ Use /drill to begin your session.")
 
-        new_rank = get_level(xp)
-        if new_rank != rank:
-            feedback += f"\n🎖️ *Rank Up!* Welcome, {new_rank}!"
-            rank = new_rank
-
-        cursor.execute("SELECT COUNT(*) FROM answers WHERE chat_id = ?", (chat_id,))
-        count = cursor.fetchone()[0]
-
-        if count >= 5:
-            fun_fact = random.choice(MYTHBUSTERS)
-            feedback += f"\n\n🎯 *Drill Complete!* Total XP: {xp} 🌟\n💬 *Sensei Wisdom:* {fun_fact}"
-            update_user(chat_id, xp=xp, rank=rank, completed_today=1)
-        else:
-            feedback += "\n\n🔥 *Next challenge coming up...* Type /drill."
-            update_user(chat_id, xp=xp, rank=rank)
-
-        send_message(chat_id, feedback)
-
-    elif user_text.lower() == "/profile":
-        profile = f"👤 *Your Profile*\n\nXP: {xp}\nStreak: {streak} days\nRank: {rank}\nDrill Status: {'✅ Completed' if completed_today else '🔄 In Progress'}"
+    elif cmd == "/profile":
+        profile = f"👤 *Your Profile*\n\nXP: {xp}\nStreak: {streak} days\nRank: {rank}\nDrills Completed Today: {'✅' if user[4] else '❌'}"
         send_message(chat_id, profile)
 
-    elif user_text.lower() == "/help":
-        msg = "🧭 *Sensei Guide*\n\n"
-        msg += "/start — Begin your training\n"
-        msg += "/drill — Face today's disaster scenario\n"
-        msg += "/profile — View your progress\n"
-        msg += "/about — Know your Sensei"
+    elif cmd == "/help":
+        msg = "🧭 *Sensei Guide*\n\n/start — Begin your training\n/drill — Face today's disaster scenario\n/profile — View your stats\n/about — Info about the bot"
         send_message(chat_id, msg)
 
-    elif user_text.lower() == "/about":
-        about = "👤 *About Disaster Sensei*\n\nCrafted by *Thomson* ⚙️\nWhere gamified survival training meets fun and smarts.\n\n⚠️ *Disclaimer:* This is for educational use. In real emergencies, follow official advice."
-        send_message(chat_id, about)
+    elif cmd == "/about":
+        msg = "👤 *About Disaster Sensei*\n\nBuilt by *Thomson* ⚙️\nGamified safety training to sharpen your instincts.\n\n⚠️ *Disclaimer:* Educational use only. Always follow official emergency protocols."
+        send_message(chat_id, msg)
 
     else:
-        send_message(chat_id, "🤔 That doesn’t ring a bell. Try /drill to get started.")
+        send_message(chat_id, "❓ Hmm... that doesn’t compute. Try /drill to get started.")
 
     return "OK"
 
-# === Admin Cleanup ===
 @app.route("/cleanup")
 def cleanup():
     token = request.args.get("token")
     if token != ADMIN_TOKEN:
         return jsonify({"status": "unauthorized"}), 401
-    cursor.execute("DELETE FROM users")
-    cursor.execute("DELETE FROM answers")
-    db.commit()
-    return jsonify({"status": "Sessions wiped clean!"})
+    user_sessions.clear()
+    return jsonify({"status": "sessions cleared"})
 
-# === Run Server ===
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
 
