@@ -1,48 +1,52 @@
+
 import os
 import json
 import random
-from datetime import datetime, timedelta
 import requests
-from flask import Flask, request
 import psycopg2
-from psycopg2.pool import SimpleConnectionPool
+from datetime import datetime, timedelta
+from flask import Flask, request, jsonify
 
+
+print("🧠 Sensei is thinking... Flask is starting.")
 app = Flask(__name__)
 
-# Load questions and mythbusters data
-with open("data.json", encoding="utf-8") as f:
-    QUESTIONS = json.load(f)
+# === Telegram Bot Setup ===
+BOT_TOKEN = os.environ["BOT_TOKEN"]
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "securetoken123")
+TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}/"
 
-with open("mythbusters.json", encoding="utf-8") as f:
-    MYTHBUSTERS = json.load(f)
+# === Load Scenarios and Mythbusters ===
+with open("data.json", "r", encoding="utf-8") as file:
+    SCENARIOS = json.load(file)
 
-# Environment variables
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
-DATABASE_URL = os.environ.get("DATABASE_URL")
-ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
+with open("mythbusters.json", "r", encoding="utf-8") as file:
+    MYTHBUSTERS = json.load(file)
 
-if not BOT_TOKEN or not DATABASE_URL or not ADMIN_TOKEN:
-    raise Exception("Please set BOT_TOKEN, DATABASE_URL and ADMIN_TOKEN environment variables.")
+# === PostgreSQL Connection ===
+def get_db():
+    return psycopg2.connect(
+        host=os.environ["PGHOST"],
+        dbname=os.environ["PGDATABASE"],
+        user=os.environ["PGUSER"],
+        password=os.environ["PGPASSWORD"],
+        port=os.environ.get("PGPORT", 5432)
+    )
 
-TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+# === Level Ranks ===
+LEVELS = [
+    (0, "🐣 Trainee Responder"),
+    (50, "🛡️ Alert Apprentice"),
+    (150, "🔥 Crisis Challenger"),
+    (300, "🌪️ Disaster Defender"),
+    (500, "🚨 Rescue Ranger"),
+    (750, "🌍 Crisis Strategist"),
+    (1000, "🎖️ Master Responder"),
+    (1500, "🧠 Disaster Sensei"),
+    (2000, "🔱 Guardian of Calm")
+]
 
-# Setup PostgreSQL connection pool (min 1, max 5 connections)
-pool = SimpleConnectionPool(1, 5, dsn=DATABASE_URL, sslmode='require')
-
-# Rank labels for display
-RANK_LABELS = {
-    1: "🐣 Trainee Responder",
-    2: "🧯 Drill Novice",
-    3: "🚒 Ember Fighter",
-    4: "🏕️ Survivalist",
-    5: "🧠 Wise Responder",
-    6: "🔥 Hazard Handler",
-    7: "🚨 Alert Ace",
-    8: "🛰️ Crisis Commander",
-    9: "🎖️ Master Responder",
-    10: "🥷 Disaster Sensei"
-}
-
+# === Send Message ===
 def send_message(chat_id, text, reply_markup=None):
     payload = {
         "chat_id": chat_id,
@@ -50,231 +54,160 @@ def send_message(chat_id, text, reply_markup=None):
         "parse_mode": "Markdown"
     }
     if reply_markup:
-        payload["reply_markup"] = json.dumps(reply_markup)
-    try:
-        resp = requests.post(TELEGRAM_API, json=payload)
-        resp.raise_for_status()
-    except Exception as e:
-        print(f"Error sending message: {e}")
+        payload["reply_markup"] = reply_markup
+    requests.post(TELEGRAM_API + "sendMessage", json=payload)
 
-def init_user(chat_id, first_name=None):
-    conn = pool.getconn()
-    try:
-        with conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT id FROM users WHERE id = %s", (chat_id,))
-                if not cur.fetchone():
-                    cur.execute("""
-                        INSERT INTO users
-                        (id, first_name, xp, streak, rank, drills, completed_today, last_drill_date, current_q)
-                        VALUES (%s, %s, 0, 0, 1, 0, FALSE, CURRENT_DATE, NULL)
-                    """, (chat_id, first_name))
-    finally:
-        pool.putconn(conn)
+# === Get Level by XP ===
+def get_level(xp):
+    for points, title in reversed(LEVELS):
+        if xp >= points:
+            return title
+    return LEVELS[0][1]
+
+def get_progress_bar(xp):
+    for i in range(len(LEVELS) - 1):
+        curr_xp, _ = LEVELS[i]
+        next_xp, next_rank = LEVELS[i + 1]
+        if curr_xp <= xp < next_xp:
+            progress = (xp - curr_xp) / (next_xp - curr_xp)
+            bar = "🟩" * int(progress * 10) + "⬜" * (10 - int(progress * 10))
+            return bar, int(progress * 100), next_xp - xp, next_rank
+    return "🟩" * 10, 100, 0, LEVELS[-1][1]
+
+leaderboard_cache = {"data": None, "last_updated": None}
+
+def get_leaderboard():
+    now = datetime.utcnow()
+    if leaderboard_cache["data"] and leaderboard_cache["last_updated"].date() == now.date():
+        return leaderboard_cache["data"]
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT first_name, xp, streak FROM users ORDER BY xp DESC LIMIT 10")
+    rows = cur.fetchall()
+    leaderboard_cache["data"] = rows
+    leaderboard_cache["last_updated"] = now
+    cur.close()
+    conn.close()
+    return rows
 
 @app.route("/", methods=["POST"])
 def webhook():
     data = request.get_json()
+    message = data.get("message") or data.get("callback_query", {}).get("message")
+    user_text = data.get("message", {}).get("text") or data.get("callback_query", {}).get("data")
+    if not message: return "No message", 200
+    chat_id = message["chat"]["id"]
+    first_name = message["chat"].get("first_name", "Sensei")
+    cmd = user_text.strip().lower()
 
-    if "message" in data:
-        chat_id = data["message"]["chat"]["id"]
-        first_name = data["message"]["chat"].get("first_name")
-        text = data["message"].get("text", "").strip()
-    elif "callback_query" in data:
-        chat_id = data["callback_query"]["message"]["chat"]["id"]
-        answer = data["callback_query"]["data"]
-        return handle_answer(chat_id, answer)
-    else:
-        return "Unsupported update", 400
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO users (id, first_name, last_active, completed_today, xp, streak, rank)
+        VALUES (%s, %s, CURRENT_DATE, false, 0, 0, %s)
+        ON CONFLICT (id) DO UPDATE SET first_name = EXCLUDED.first_name
+    """, (chat_id, first_name, get_level(0)))
+    conn.commit()
 
-    init_user(chat_id, first_name)
+    cur.execute("SELECT * FROM users WHERE id = %s", (chat_id,))
+    user = cur.fetchone()
+    xp, streak, completed_today, current_q, drills = user[4], user[5], user[3], user[7], user[8]
 
-    if text == "/start":
-        send_message(chat_id,
-            f"🧠 *Welcome, {first_name or 'Survivor'}!*\n"
-            "Train your instincts in the Disaster Sensei Dojo.\n\n"
-            "Type /drill to begin your daily survival drill.\n"
-            "Use /help for available commands."
-        )
-    elif text == "/drill":
-        return handle_drill(chat_id)
-    elif text == "/profile":
-        return handle_profile(chat_id)
-    elif text == "/about":
-        send_message(chat_id,
-            "👨‍🏫 *Disaster Sensei*\n"
-            "Created by *Thomson*.\n"
-            "An interactive bot teaching disaster preparedness.\n"
-            "Panic is the enemy, preparation is power."
-        )
-    elif text == "/help":
-        send_message(chat_id,
-            "🆘 *Available Commands:*\n"
-            "/start - Welcome message\n"
-            "/drill - Start daily drills (max 5 per day)\n"
-            "/profile - Show your stats\n"
-            "/about - About this bot"
-        )
-    else:
-        send_message(chat_id, "❓ Unknown command. Try /help.")
+    if cmd == "/start":
+        send_message(chat_id, "🚨 *Welcome to Disaster Sensei* 🚨\nType /drill to begin today’s challenge.")
 
-    return "OK", 200
+    elif cmd == "/drill":
+        if completed_today or drills >= 5:
+            send_message(chat_id, "🌞 You've completed today's 5 drills. Come back tomorrow!")
+        else:
+            scenario = random.choice(SCENARIOS)
+            qjson = json.dumps(scenario)
+            cur.execute("UPDATE users SET current_q = %s WHERE id = %s", (qjson, chat_id))
+            conn.commit()
+            msg = f"🔥 *Disaster Drill {drills+1}/5:*\n\n"
 
-def handle_drill(chat_id):
-    today = datetime.utcnow().date()
-    conn = pool.getconn()
-    try:
-        with conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT drills, completed_today, last_drill_date FROM users WHERE id = %s", (chat_id,))
-                row = cur.fetchone()
-                if not row:
-                    drills, completed_today, last_drill_date = 0, False, None
-                else:
-                    drills, completed_today, last_drill_date = row
+{scenario['scenario']}
 
-                # Reset daily counters if new day
-                if not last_drill_date or last_drill_date < today:
-                    drills = 0
-                    completed_today = False
-                    cur.execute(
-                        "UPDATE users SET drills = 0, completed_today = FALSE, last_drill_date = %s WHERE id = %s",
-                        (today, chat_id)
-                    )
+"
+            msg += f"A: {scenario['A']}
+B: {scenario['B']}
+C: {scenario['C']}
+D: {scenario['D']}"
+            buttons = {"inline_keyboard": [[{"text": x, "callback_data": x} for x in "ABCD"]]}
+            send_message(chat_id, msg, reply_markup=json.dumps(buttons))
 
-                if completed_today or drills >= 5:
-                    send_message(chat_id, "✅ You've completed today's 5-question drill. Come back tomorrow!")
-                    return "Limit reached", 200
+    elif cmd.upper() in ["A", "B", "C", "D"]:
+        if not current_q:
+            send_message(chat_id, "🌀 No active drill. Type /drill to start.")
+        else:
+            scenario = json.loads(current_q)
+            correct = cmd.upper() == scenario["correct"]
+            xp_earned = 10 if correct else 0
+            new_xp = xp + xp_earned
+            new_rank = get_level(new_xp)
+            drills += 1
+            done_today = drills >= 5
 
-                # Pick random question
-                question = random.choice(QUESTIONS)
+            cur.execute("UPDATE users SET xp = %s, rank = %s, completed_today = %s, drills = %s WHERE id = %s",
+                        (new_xp, new_rank, done_today, drills, chat_id))
+            conn.commit()
 
-                # Save question in DB
-                cur.execute(
-                    "UPDATE users SET current_q = %s WHERE id = %s",
-                    (json.dumps(question), chat_id)
-                )
+            feedback = scenario["feedback"].get(cmd.upper(), "🧠 Wise choice, Sensei.")
+            feedback += f"\n{'✅' if correct else '❌'} You earned *{xp_earned} XP*."
+            bar, percent, left, next_rank = get_progress_bar(new_xp)
+            feedback += f"\n\n🏅 *Progress to next rank:* {next_rank}\n{bar} {percent}%\n🧗 XP to next rank: {left}"
+            send_message(chat_id, feedback)
 
-                options = [{"text": opt, "callback_data": opt} for opt in question["options"]]
-                reply_markup = {"inline_keyboard": [options]}
-                send_message(chat_id, f"🧩 *Scenario:*\n{question['question']}", reply_markup=reply_markup)
-    finally:
-        pool.putconn(conn)
-
-    return "Drill sent", 200
-
-def handle_answer(chat_id, answer):
-    conn = pool.getconn()
-    try:
-        with conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "SELECT current_q, xp, drills, streak, last_drill_date FROM users WHERE id = %s",
-                    (chat_id,)
-                )
-                row = cur.fetchone()
-                if not row or not row[0]:
-                    send_message(chat_id, "🚫 No active question. Use /drill to start your daily drills.")
-                    return "No active question", 200
-
-                current_q_json, xp, drills, streak, last_drill_date = row
-                question = json.loads(current_q_json)
-
-                correct_answer = question["answer"]
-                feedback = question["feedback"]
-                today = datetime.utcnow().date()
-
-                gained_xp = 10 if answer == correct_answer else 0
-                new_xp = xp + gained_xp
-                new_rank = min(new_xp // 50 + 1, 10)
-
-                if last_drill_date == today - timedelta(days=1):
-                    new_streak = streak + 1
-                elif last_drill_date == today:
-                    new_streak = streak
-                else:
-                    new_streak = 1
-
-                new_drills = drills + 1
-                completed_today = new_drills >= 5
-
-                cur.execute("""
-                    UPDATE users SET
-                        xp = %s,
-                        rank = %s,
-                        drills = %s,
-                        streak = %s,
-                        last_drill_date = %s,
-                        completed_today = %s,
-                        current_q = NULL
-                    WHERE id = %s
-                """, (new_xp, new_rank, new_drills, new_streak, today, completed_today, chat_id))
-
-                rank_label = RANK_LABELS.get(new_rank, "🌀 Unknown Rank")
-                myth = random.choice(MYTHBUSTERS)
-                msg = (
-                    f"✅ *Answer:* {correct_answer}\n"
-                    f"💬 {feedback}\n\n"
-                    f"🎖 XP gained: +{gained_xp}\n"
-                    f"🔥 Streak: {new_streak} day(s)\n"
-                    f"🏅 Rank: {rank_label}\n\n"
-                    f"💡 *Mythbuster:* _{myth}_"
-                )
+            if done_today:
+                wisdom = random.choice(MYTHBUSTERS)
+                msg = f"🎯 *Drill Complete!*\n✨ Total XP: *{new_xp}*\n🔥 Streak: {streak} days\n🏅 Rank: {new_rank}\n\n📚 *Sensei Wisdom:* {wisdom}\n🔁 Return tomorrow to train more!"
                 send_message(chat_id, msg)
-    finally:
-        pool.putconn(conn)
+            else:
+                buttons = {"inline_keyboard": [[{"text": "Next Scenario", "callback_data": "/drill"}]]}
+                send_message(chat_id, "✅ Ready for your next challenge?", reply_markup=json.dumps(buttons))
 
-    return "Answer processed", 200
+    elif cmd == "/profile":
+        bar, percent, left, next_rank = get_progress_bar(xp)
+        profile = f"👤 *Your Profile*\n\nXP: {xp}\nStreak: {streak} days\nRank: {get_level(xp)}\n\n🏅 Progress to next rank: {next_rank}\n{bar} {percent}%\n🧗 XP to next rank: {left}\n\nDrill Completed Today: {'✅' if completed_today else '❌'}"
+        send_message(chat_id, profile)
 
-def handle_profile(chat_id):
-    conn = pool.getconn()
-    try:
-        with conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "SELECT xp, rank, drills, streak FROM users WHERE id = %s",
-                    (chat_id,)
-                )
-                row = cur.fetchone()
-                if not row:
-                    send_message(chat_id, "No profile found. Use /start first.")
-                    return "No profile", 200
+    elif cmd == "/leaderboard":
+        top = get_leaderboard()
+        msg = "🏆 *Disaster Sensei — Daily Leaderboard* 🏆\n\n🔥 Top responders mastering disaster readiness:\n\n"
+        for i, row in enumerate(top, 1):
+            msg += f"{i}️⃣ {row[0]} — {row[1]} XP, 🔥 {row[2]}d streak\n"
+        msg += "\n⏳ Leaderboard resets daily at midnight UTC\n💡 Use /drill to climb ranks!"
+        send_message(chat_id, msg)
 
-                xp, rank, drills, streak = row
-                rank_label = RANK_LABELS.get(rank, "🌀 Unknown Rank")
-                progress_blocks = rank if rank <= 10 else 10
-                progress_bar = "🟩" * progress_blocks + "⬜" * (10 - progress_blocks)
+    elif cmd == "/help":
+        msg = "/start — Begin training\n/drill — Daily challenge\n/profile — View your stats\n/leaderboard — XP leaderboard\n/about — About this bot"
+        send_message(chat_id, msg)
 
-                msg = (
-                    f"🏅 *Your Profile*\n"
-                    f"XP: {xp}\n"
-                    f"Rank: {rank_label}\n"
-                    f"Progress: {progress_bar}\n"
-                    f"🔥 Streak: {streak} day(s)\n"
-                    f"Drills today: {drills}/5"
-                )
-                send_message(chat_id, msg)
-    finally:
-        pool.putconn(conn)
+    elif cmd == "/about":
+        msg = "👤 *About Disaster Sensei*\n\nBuilt by *Thomson* ⚙️\nMaking safety fun, smart, and practical.\n\n⚠️ *Disclaimer:* This bot is for educational use only. Follow official emergency guidelines."
+        send_message(chat_id, msg)
 
-    return "Profile sent", 200
+    else:
+        send_message(chat_id, "❓ I didn’t get that. Type /drill to start training.")
 
-@app.route("/cleanup", methods=["GET"])
+    cur.close()
+    conn.close()
+    return "OK"
+
+@app.route("/cleanup")
 def cleanup():
     token = request.args.get("token")
     if token != ADMIN_TOKEN:
-        return "Unauthorized", 401
-
-    conn = pool.getconn()
-    try:
-        with conn:
-            with conn.cursor() as cur:
-                cur.execute("UPDATE users SET drills = 0, completed_today = FALSE")
-    finally:
-        pool.putconn(conn)
-
-    return "Daily drills reset for all users", 200
-
+        return jsonify({"status": "unauthorized"}), 401
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("UPDATE users SET completed_today = false, drills = 0")
+    conn.commit()
+    cur.close()
+    conn.close()
+    leaderboard_cache.clear()
+    return jsonify({"status": "daily reset complete"})
+print("🚀 Flask is launching with dynamic port...")
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(debug=False, host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=5000)
+
