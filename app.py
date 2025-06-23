@@ -80,7 +80,7 @@ def safe_route(f):
     return wrapper
 
 @app.route("/", methods=["GET"])
-def index():
+def home():
     return "🚨 Disaster Sensei is running!", 200
 
 @app.route("/", methods=["POST"])
