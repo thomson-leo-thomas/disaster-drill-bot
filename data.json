@@ -1,223 +1,142 @@
 [
   {
-    "question": "💨 You smell gas in your kitchen. What’s the safest next step?",
-    "options": [
-      "Light a candle to see better",
-      "Turn on the fan for fresh air",
-      "Switch on the light to check",
-      "Open windows and shut the gas valve"
-    ],
-    "answer": "Open windows and shut the gas valve",
-    "feedback": "Good call! Fresh air reduces gas buildup and shutting the valve stops the leak."
+    "scenario": "🔥 You’re frying pakoras and suddenly the oil catches fire. What’s the right move?",
+    "A": "Throw water on it, duh",
+    "B": "Cover it with a metal lid and turn off the stove",
+    "C": "Blow on it like it’s a birthday candle",
+    "D": "Call your neighbor mid-panic",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Oil + water = firework show. 🎆 Not today!",
+      "B": "✅ Smother the flame, starve the fire. Chef + safety! 👨‍🍳",
+      "C": "❌ Unless your lungs have extinguisher mode, nope. 😂",
+      "D": "❌ Neighbor isn’t a firefighter. 🔥"
+    }
   },
   {
-    "question": "🔥 Your pressure cooker is hissing oddly. What should you do?",
-    "options": [
-      "Open it quickly before it explodes",
-      "Call mom and panic",
-      "Turn off the stove and wait for pressure to drop",
-      "Throw water on it to cool it"
-    ],
-    "answer": "Turn off the stove and wait for pressure to drop",
-    "feedback": "Smart move — letting the pressure drop naturally avoids accidents."
+    "scenario": "🌧️ You’re in a car and it starts flooding outside. What’s your genius play?",
+    "A": "Open the door to check water level",
+    "B": "Drive deeper to test your car’s swimming skills",
+    "C": "Turn off the engine and climb to the roof",
+    "D": "Text group chat ‘I might float away lol’",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ That water’s not here for a chat. 🌊",
+      "B": "❌ It’s a car, not a submarine.",
+      "C": "✅ Elevation = survival. Roof it. 🚗⬆️",
+      "D": "❌ Priorities, please. 📵"
+    }
   },
   {
-    "question": "⚡ After a storm, you see a fallen live wire on the road. What do you do?",
-    "options": [
-      "Use a stick to move it away",
-      "Take a picture and post it online",
-      "Walk barefoot near it carefully",
-      "Stay far and call the power company"
-    ],
-    "answer": "Stay far and call the power company",
-    "feedback": "Safety first! Only professionals should handle live wires."
+    "scenario": "🧃 You feel dizzy and weak after skipping breakfast. What's smart?",
+    "A": "Chug soda for energy",
+    "B": "Eat a balanced snack and rest",
+    "C": "Ignore it because ‘grind never stops’",
+    "D": "Challenge your body with a push-up",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Sugar spike = crash mode incoming. 🚨",
+      "B": "✅ Brain + body need fuel. 🍎🧠",
+      "C": "❌ You’re not a robot (yet).",
+      "D": "❌ Gym time later, not when woozy. 🏋️‍♂️"
+    }
   },
   {
-    "question": "🌊 You’re trapped in floodwater. What should you avoid doing?",
-    "options": [
-      "Walk through water near power lines",
-      "Move to the highest floor",
-      "Switch off all main power",
-      "Call emergency services"
-    ],
-    "answer": "Walk through water near power lines",
-    "feedback": "Electricity and water mix deadly — avoid at all costs!"
+    "scenario": "🚽 You find a cleaning chemical bottle without a label. What now?",
+    "A": "Sniff it to guess what it is",
+    "B": "Mix it with bleach and ‘see what happens’",
+    "C": "Leave it alone and tell someone responsible",
+    "D": "Use it anyway, what could go wrong?",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Sherlock Nose is not a safe method. 🕵️‍♂️👃",
+      "B": "❌ Chemical cocktail = boom 💣",
+      "C": "✅ Unknown = unsafe. Report it. 🧼🧠",
+      "D": "❌ Curiosity killed the lungs."
+    }
   },
   {
-    "question": "🚪 You're in a burning room. How do you check if the exit door is safe?",
-    "options": [
-      "Open it immediately",
-      "Touch the door with the back of your hand",
-      "Break a window and jump out",
-      "Hide in a closet"
-    ],
-    "answer": "Touch the door with the back of your hand",
-    "feedback": "Feeling heat warns you not to open the door and let in more fire."
+    "scenario": "💧 Your little cousin is about to stick a fork into a toaster. What do you do?",
+    "A": "Yell and scare them into freezing",
+    "B": "Unplug the toaster and explain calmly",
+    "C": "Let them learn the hard way",
+    "D": "Record it for viral content",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Scared kids = clumsy accidents. 😱",
+      "B": "✅ Unplug + explain = true guardian mode.",
+      "C": "❌ Not the time for natural consequences.",
+      "D": "❌ Safety > views. 📵"
+    }
   },
   {
-    "question": "🩸 You cut your hand badly. What’s the best immediate action?",
-    "options": [
-      "Stuff it with cotton and tape",
-      "Wrap with a clean cloth and elevate",
-      "Rub turmeric hoping for a miracle",
-      "Ignore it, it’s not serious"
-    ],
-    "answer": "Wrap with a clean cloth and elevate",
-    "feedback": "Clean and elevate to slow bleeding — first aid 101!"
+    "scenario": "🧨 You find an old box labeled ‘fireworks’ in your attic. What now?",
+    "A": "Light one to see if it still works",
+    "B": "Open and shake it to check the sound",
+    "C": "Take it outside and call local authorities",
+    "D": "Sell it online as ‘vintage boom’",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Flashback to ‘kaboom’. 🎆",
+      "B": "❌ Rattling explosives? Risky business.",
+      "C": "✅ Better safe than sky-high. 🧨🛑",
+      "D": "❌ Illegal and dumb. 🚓"
+    }
   },
   {
-    "question": "🌪️ Caught in a dust storm outdoors, what should you do?",
-    "options": [
-      "Stand and scream into the wind",
-      "Use your jacket to cover your face and crouch",
-      "Run in circles to confuse the storm",
-      "Take off your helmet for fresh air"
-    ],
-    "answer": "Use your jacket to cover your face and crouch",
-    "feedback": "Protect your eyes and lungs — stay low and shielded."
+    "scenario": "🌡️ Your friend has heatstroke symptoms after a trek. What’s wrong to do?",
+    "A": "Pour cold water over them",
+    "B": "Give them ice cubes to eat fast",
+    "C": "Move them to shade and cool them gradually",
+    "D": "Fan them gently while loosening clothing",
+    "correct": "B",
+    "feedback": {
+      "A": "✅ Not ideal, but better than nothing.",
+      "B": "❌ Cold shock = bad idea. 🚫",
+      "C": "✅ Gradual cooling = winning move. 🧊",
+      "D": "✅ Gentle fanning = smart plan. 🪭"
+    }
   },
   {
-    "question": "☠️ Someone is unconscious near a running generator indoors. What’s likely happening?",
-    "options": [
-      "They’re just sleeping",
-      "Carbon monoxide poisoning",
-      "They fainted from boredom",
-      "They rage-quit life"
-    ],
-    "answer": "Carbon monoxide poisoning",
-    "feedback": "CO is silent and deadly. Ventilate immediately and get help."
+    "scenario": "🔌 Your laptop charger sparks when plugged in. What now?",
+    "A": "Plug it again harder",
+    "B": "Blow on the socket like a Nintendo cartridge",
+    "C": "Unplug it and replace the charger",
+    "D": "Ignore it. It still charges, right?",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ More force = more sparks. 🧨",
+      "B": "❌ It’s not the 90s, nor a console. 😂",
+      "C": "✅ Sparky things don’t belong indoors. ⚠️",
+      "D": "❌ Until it explodes in your face. 💥"
+    }
   },
   {
-    "question": "💣 You hear a bomb threat in a crowd. What’s your best response?",
-    "options": [
-      "Run while livestreaming",
-      "Shout louder to warn others",
-      "Drop low and exit calmly avoiding bottlenecks",
-      "Freeze and hope it’s a prank"
-    ],
-    "answer": "Drop low and exit calmly avoiding bottlenecks",
-    "feedback": "Staying calm and moving safely saves lives."
+    "scenario": "🛁 You slip in the bathroom and bang your head. What’s the least helpful move?",
+    "A": "Call someone for help",
+    "B": "Get up immediately and walk it off",
+    "C": "Lie down and check for dizziness",
+    "D": "Make sure you're not bleeding",
+    "correct": "B",
+    "feedback": {
+      "A": "✅ Help is good.",
+      "B": "❌ Brain needs a status check. 🧠",
+      "C": "✅ Smart. Don’t rush it.",
+      "D": "✅ Always check for bleeding! 🚑"
+    }
   },
   {
-    "question": "⚠️ You see a wire hanging into a puddle after a storm. Your move?",
-    "options": [
-      "Walk barefoot around it",
-      "Touch it with a stick",
-      "Assume it’s live and keep distance",
-      "Film it for social media"
-    ],
-    "answer": "Assume it’s live and keep distance",
-    "feedback": "Never underestimate electrical hazards in water."
-  },
-  {
-    "question": "🌞 A friend faints from heat exhaustion. What should NOT be done?",
-    "options": [
-      "Give them water while unconscious",
-      "Lay them down and elevate legs",
-      "Loosen clothing and fan them gently",
-      "Check breathing and call for help"
-    ],
-    "answer": "Give them water while unconscious",
-    "feedback": "Don’t give fluids to someone unconscious — choking risk!"
-  },
-  {
-    "question": "🚨 You’re trapped in an earthquake. What’s the best action?",
-    "options": [
-      "Run outside immediately",
-      "Drop, cover, and hold on",
-      "Stand in a doorway",
-      "Use elevator to escape fast"
-    ],
-    "answer": "Drop, cover, and hold on",
-    "feedback": "Protect yourself under sturdy furniture and wait for shaking to stop."
-  },
-  {
-    "question": "🪱 You find a leech on your leg. How do you safely remove it?",
-    "options": [
-      "Rip it off quickly",
-      "Light a match near it",
-      "Sprinkle salt on it",
-      "Politely ask it to leave"
-    ],
-    "answer": "Sprinkle salt on it",
-    "feedback": "Salt causes the leech to detach gently without leaving parts behind."
-  },
-  {
-    "question": "🧯 You find a fire extinguisher. What’s the first step before using it?",
-    "options": [
-      "Pull the pin",
-      "Spray immediately",
-      "Shake it hard",
-      "Throw it at the fire"
-    ],
-    "answer": "Pull the pin",
-    "feedback": "Removing the pin allows you to operate the extinguisher properly."
-  },
-  {
-    "question": "🚗 After an earthquake, before driving your car, you should?",
-    "options": [
-      "Start driving immediately",
-      "Check for damages and leaks",
-      "Honk the horn continuously",
-      "Fill gas tank to the brim"
-    ],
-    "answer": "Check for damages and leaks",
-    "feedback": "Safety first — damaged vehicles can be dangerous on the road."
-  },
-  {
-    "question": "🕯️ Power goes out during a storm. Which is safest?",
-    "options": [
-      "Use candles everywhere",
-      "Use flashlights and avoid open flames",
-      "Light a bonfire indoors",
-      "Use your phone’s flashlight only"
-    ],
-    "answer": "Use flashlights and avoid open flames",
-    "feedback": "Flashlights are safe; candles increase fire risk."
-  },
-  {
-    "question": "🥶 You suspect someone has hypothermia. What’s a key sign?",
-    "options": [
-      "Shivering uncontrollably",
-      "Feeling hot and sweaty",
-      "Rapid speech and laughter",
-      "Bright red skin"
-    ],
-    "answer": "Shivering uncontrollably",
-    "feedback": "Shivering means the body is trying to generate heat urgently."
-  },
-  {
-    "question": "🚿 Is it safe to shower during a thunderstorm?",
-    "options": [
-      "Yes, water is a good conductor",
-      "No, lightning can travel through pipes",
-      "Only if windows are closed",
-      "Only if grounded properly"
-    ],
-    "answer": "No, lightning can travel through pipes",
-    "feedback": "Avoid water use during storms to prevent electric shock."
-  },
-  {
-    "question": "🛑 You see someone choking and unable to breathe. What do you do?",
-    "options": [
-      "Give them water",
-      "Perform Heimlich maneuver",
-      "Wait and watch",
-      "Slap their back repeatedly"
-    ],
-    "answer": "Perform Heimlich maneuver",
-    "feedback": "Quick abdominal thrusts can save a choking person."
-  },
-  {
-    "question": "📱 In an emergency, why is keeping your phone charged crucial?",
-    "options": [
-      "For social media updates",
-      "To call for help and receive alerts",
-      "To watch videos and stay calm",
-      "To send funny memes"
-    ],
-    "answer": "To call for help and receive alerts",
-    "feedback": "Communication is a lifeline during disasters."
+    "scenario": "⚠️ You notice a strange burning smell in your room but no smoke. First move?",
+    "A": "Ignore it, maybe it's your neighbor cooking",
+    "B": "Sniff around like a hound",
+    "C": "Unplug electronics and investigate safely",
+    "D": "Light incense to mask the smell",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Ignoring = future flames. 🔥",
+      "B": "❌ Nose isn’t a sensor. Be smart.",
+      "C": "✅ Power down, check safely. 🧯",
+      "D": "❌ Masking = delaying disaster. 🚫"
+    }
   }
 ]
-
