@@ -33,7 +33,7 @@ ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
 if not BOT_TOKEN or not DATABASE_URL or not ADMIN_TOKEN:
     raise Exception("Please set BOT_TOKEN, DATABASE_URL and ADMIN_TOKEN environment variables.")
 
-TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
 # PostgreSQL connection pool
 try:
@@ -64,7 +64,7 @@ def send_message(chat_id, text, reply_markup=None):
     if reply_markup:
         payload["reply_markup"] = json.dumps(reply_markup)
     try:
-        resp = requests.post(TELEGRAM_API, json=payload)
+        resp = requests.post(f"{TELEGRAM_API}/sendMessage", json=payload)
         resp.raise_for_status()
     except Exception as e:
         print(f"Error sending message: {e}", file=sys.stderr)
@@ -92,44 +92,49 @@ def webhook():
         chat_id = data["message"]["chat"]["id"]
         first_name = data["message"]["chat"].get("first_name")
         text = data["message"].get("text", "").strip()
+        init_user(chat_id, first_name)
+
+        if text == "/start":
+            send_message(chat_id,
+                f"🧠 *Welcome, {first_name or 'Survivor'}!*\n"
+                "Train your instincts in the Disaster Sensei Dojo.\n\n"
+                "Type /drill to begin your daily survival drill.\n"
+                "Use /help for available commands."
+            )
+        elif text == "/drill":
+            return handle_drill(chat_id)
+        elif text == "/profile":
+            return handle_profile(chat_id)
+        elif text == "/about":
+            send_message(chat_id,
+                "🧑‍🏫 *Disaster Sensei*\n"
+                "Your fun & fearless guide to staying safe in any crisis! 💥\n\n"
+                "⚠️ *Disclaimer:* This bot provides educational safety guidance and is *not* a substitute for professional emergency services.\n"
+                "Always follow official instructions during emergencies."
+            )
+        elif text == "/help":
+            send_message(chat_id,
+                "🆘 *Available Commands:*\n"
+                "/start - Welcome message\n"
+                "/drill - Start daily drills (max 5 per day)\n"
+                "/profile - Show your stats\n"
+                "/about - About this bot"
+            )
+        else:
+            send_message(chat_id, "❓ Unknown command. Try /help.")
+
     elif "callback_query" in data:
         chat_id = data["callback_query"]["message"]["chat"]["id"]
-        answer = data["callback_query"]["data"]
-        return handle_answer(chat_id, answer)
+        user_answer = data["callback_query"]["data"]
+
+        # Determine if this is an answer or a 'Next' action
+        if user_answer == "next_question":
+            return handle_drill(chat_id)
+        else:
+            return handle_answer(chat_id, user_answer)
+
     else:
         return "Unsupported update", 400
-
-    init_user(chat_id, first_name)
-
-    if text == "/start":
-        send_message(chat_id,
-            f"🧠 *Welcome, {first_name or 'Survivor'}!*\n"
-            "Train your instincts in the Disaster Sensei Dojo.\n\n"
-            "Type /drill to begin your daily survival drill.\n"
-            "Use /help for available commands."
-        )
-    elif text == "/drill":
-        return handle_drill(chat_id)
-    elif text == "/profile":
-        return handle_profile(chat_id)
-    elif text == "/about":
-        send_message(chat_id,
-            "👨‍🏫 *Disaster Sensei*\n"
-            "Created by *Thomson*.\n"
-            "Interactive bot teaching disaster preparedness with cool tips and drills.\n"
-            "🛡️ Stay safe, stay sharp!\n\n"
-            "_Disclaimer:_ This bot provides educational safety guidance and is not a substitute for professional emergency services."
-        )
-    elif text == "/help":
-        send_message(chat_id,
-            "🆘 *Available Commands:*\n"
-            "/start - Welcome message\n"
-            "/drill - Start daily drills (max 5 per day)\n"
-            "/profile - Show your stats\n"
-            "/about - About this bot"
-        )
-    else:
-        send_message(chat_id, "❓ Unknown command. Try /help.")
 
     return "OK", 200
 
@@ -147,8 +152,8 @@ def init_user(chat_id, first_name=None):
                 if not cur.fetchone():
                     cur.execute("""
                         INSERT INTO users
-                        (id, first_name, xp, streak, rank, drills, completed_today, last_drill_date, current_q, daily_xp)
-                        VALUES (%s, %s, 0, 0, 1, 0, FALSE, CURRENT_DATE, NULL, 0)
+                        (id, first_name, xp, streak, rank, drills, completed_today, last_drill_date, current_q)
+                        VALUES (%s, %s, 0, 0, 1, 0, FALSE, CURRENT_DATE, NULL)
                     """, (chat_id, first_name))
     finally:
         pool.putconn(conn)
@@ -168,7 +173,7 @@ def handle_drill(chat_id):
                     drills = 0
                     completed_today = False
                     cur.execute(
-                        "UPDATE users SET drills = 0, completed_today = FALSE, last_drill_date = %s, daily_xp = 0 WHERE id = %s",
+                        "UPDATE users SET drills = 0, completed_today = FALSE, last_drill_date = %s WHERE id = %s",
                         (today, chat_id)
                     )
 
@@ -176,20 +181,13 @@ def handle_drill(chat_id):
                     send_message(chat_id, "✅ You've completed today's 5-question drill. Come back tomorrow!")
                     return "Limit reached", 200
 
+                # Pick a random question that is not the current question
                 question = random.choice(QUESTIONS)
 
-                cur.execute("UPDATE users SET current_q = %s WHERE id = %s", (json.dumps(question), chat_id))
+                # Save question and question number
+                cur.execute("UPDATE users SET current_q = %s, drills = %s WHERE id = %s", (json.dumps(question), drills + 1, chat_id))
 
-                # Compose message with scenario + options fully visible
-                options_text = (
-                    f"A. {question['A']}\n"
-                    f"B. {question['B']}\n"
-                    f"C. {question['C']}\n"
-                    f"D. {question['D']}"
-                )
-                message_text = f"{question['scenario']}\n\n{options_text}"
-
-                # Inline buttons just letters A, B, C, D
+                # Prepare inline keyboard with options A,B,C,D as callback_data
                 buttons = [
                     [
                         {"text": "A", "callback_data": "A"},
@@ -199,90 +197,100 @@ def handle_drill(chat_id):
                     ]
                 ]
 
-                send_message(chat_id, message_text, reply_markup={"inline_keyboard": buttons})
+                # Show scenario with question number and options letter keys only
+                send_message(chat_id,
+                    f"🧠 *Scenario {drills + 1} of 5:*\n{question['scenario']}\n\n"
+                    f"A: {question['A']}\n"
+                    f"B: {question['B']}\n"
+                    f"C: {question['C']}\n"
+                    f"D: {question['D']}",
+                    reply_markup={"inline_keyboard": buttons}
+                )
     finally:
         pool.putconn(conn)
 
-    return "Drill sent", 200
+    return "Drill question sent", 200
 
 @safe_route
-def handle_answer(chat_id, answer):
+def handle_answer(chat_id, user_answer):
     conn = pool.getconn()
     try:
         with conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT current_q, xp, drills, streak, last_drill_date, daily_xp FROM users WHERE id = %s", (chat_id,))
+                cur.execute("SELECT current_q, xp, drills, streak, last_drill_date FROM users WHERE id = %s", (chat_id,))
                 row = cur.fetchone()
                 if not row or not row[0]:
                     send_message(chat_id, "🚫 No active question. Use /drill to start your daily drills.")
                     return "No active question", 200
 
-                current_q_json, xp, drills, streak, last_drill_date, daily_xp = row
+                current_q_json, xp, drills, streak, last_drill_date = row
                 question = json.loads(current_q_json)
 
                 correct_answer = question["correct"]
                 feedback = question["feedback"]
                 today = datetime.utcnow().date()
 
-                # XP logic: 10 XP per correct answer, plus 5 XP bonus for streak maintenance
-                gained_xp = 10 if answer == correct_answer else 0
-                new_xp = xp + gained_xp
-                new_daily_xp = daily_xp + gained_xp
+                # XP for answer
+                gained_xp = 10 if user_answer == correct_answer else 0
 
-                new_rank = min(new_xp // 50 + 1, 10)
-
-                # Streak logic: increment streak if last drill was yesterday
+                # XP for streak maintenance
                 if last_drill_date == today - timedelta(days=1):
                     new_streak = streak + 1
+                    gained_xp += 5  # bonus XP for streak
                 elif last_drill_date == today:
                     new_streak = streak
                 else:
                     new_streak = 1
 
-                new_drills = drills + 1
-                completed_today = new_drills >= 5
+                new_xp = xp + gained_xp
+                new_rank = min(new_xp // 50 + 1, 10)
 
-                # Update DB: reset current_q, update xp, streak, drills, daily_xp etc.
+                completed_today = drills >= 5
+
                 cur.execute("""
                     UPDATE users SET
                         xp = %s,
                         rank = %s,
-                        drills = %s,
                         streak = %s,
                         last_drill_date = %s,
                         completed_today = %s,
-                        current_q = NULL,
-                        daily_xp = %s
+                        current_q = NULL
                     WHERE id = %s
-                """, (new_xp, new_rank, new_drills, new_streak, today, completed_today, new_daily_xp, chat_id))
+                """, (new_xp, new_rank, new_streak, today, completed_today, chat_id))
 
-                if not completed_today:
-                    # Show only feedback and gained XP after each answer with a Next button
-                    msg = (
-                        f"✅ *Answer:* {answer}\n"
-                        f"{feedback[answer]}\n\n"
-                        f"🎖 XP gained: +{gained_xp}"
-                    )
-                    # Next button to fetch next question
-                    next_button = {"inline_keyboard": [[{"text": "Next", "callback_data": "next"}]]}
-                    send_message(chat_id, msg, reply_markup=next_button)
-                else:
-                    # Completed 5 questions — show summary
-                    xp_to_next_rank = (new_rank * 50) - new_xp if new_rank < 10 else 0
-                    rank_label = RANK_LABELS.get(new_rank, "🌀 Unknown Rank")
-                    myth_name = "Disaster Decode"  # renamed mythbusters section
+                # Prepare feedback message
+                answer_feedback = feedback.get(user_answer, "No feedback available.")
+                is_correct = "✅" if user_answer == correct_answer else "❌"
+                msg = f"{is_correct} *Answer*: {answer_feedback}\n🎖 XP gained: +{gained_xp}"
 
-                    msg = (
-                        f"✅ *Daily Drill Complete!*\n\n"
-                        f"🎯 Total XP earned today: {new_daily_xp}\n"
+                if completed_today:
+                    # Show summary
+                    xp_needed = (new_rank * 50) - new_xp
+                    rank_label = RANK_LABELS.get(new_rank, "🌀 Disaster Sensei")
+
+                    myth_name = "Disaster Decode"
+                    myth_fact = random.choice(MYTHBUSTERS)
+
+                    summary_msg = (
+                        f"\n\n🎉 *Drill Complete!*\n"
+                        f"✅ Total XP earned today: {new_xp}\n"
                         f"🔥 Streak: {new_streak} day(s)\n"
-                        f"🏅 Current Rank: {rank_label}\n"
-                        f"📈 XP to next rank: {xp_to_next_rank}\n\n"
-                        f"💡 *{myth_name}* - Stay safe, stay smart!"
+                        f"🏅 Current rank: {rank_label}\n"
+                        f"📈 XP to next rank: {xp_needed}\n\n"
+                        f"💡 *{myth_name}:* _{myth_fact}_"
                     )
-                    # Button to view profile
-                    profile_button = {"inline_keyboard": [[{"text": "View Profile", "callback_data": "profile"}]]}
-                    send_message(chat_id, msg, reply_markup=profile_button)
+
+                    buttons = [
+                        [{"text": "View Profile", "callback_data": "view_profile"}]
+                    ]
+
+                    send_message(chat_id, msg + summary_msg, reply_markup={"inline_keyboard": buttons})
+                else:
+                    # Next question button
+                    buttons = [
+                        [{"text": "Next ➡️", "callback_data": "next_question"}]
+                    ]
+                    send_message(chat_id, msg, reply_markup={"inline_keyboard": buttons})
 
     finally:
         pool.putconn(conn)
@@ -302,7 +310,7 @@ def handle_profile(chat_id):
                     return "No profile", 200
 
                 xp, rank, streak = row
-                rank_label = RANK_LABELS.get(rank, "🌀 Unknown Rank")
+                rank_label = RANK_LABELS.get(rank, "🌀 Disaster Sensei")
                 progress_bar = "🟩" * min(rank, 10) + "⬜" * (10 - min(rank, 10))
 
                 msg = (
@@ -329,7 +337,7 @@ def cleanup():
     try:
         with conn:
             with conn.cursor() as cur:
-                cur.execute("UPDATE users SET drills = 0, completed_today = FALSE, daily_xp = 0")
+                cur.execute("UPDATE users SET drills = 0, completed_today = FALSE")
     finally:
         pool.putconn(conn)
 
