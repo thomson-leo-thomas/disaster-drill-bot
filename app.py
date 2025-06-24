@@ -1,3 +1,4 @@
+# --- [IMPORTS & SETUP] ---
 import os
 import json
 import random
@@ -12,7 +13,7 @@ from psycopg2.pool import SimpleConnectionPool, PoolError
 app = Flask(__name__)
 print("🧠 Sensei is thinking... Flask is starting.")
 
-# Load questions and mythbusters safely
+# --- [LOAD JSON DATA] ---
 try:
     with open("data.json", encoding="utf-8") as f:
         QUESTIONS = json.load(f)
@@ -25,7 +26,7 @@ try:
 except Exception as e:
     raise RuntimeError(f"Failed to load mythbusters.json: {e}")
 
-# Environment variables
+# --- [ENVIRONMENT VARIABLES] ---
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 DATABASE_URL = os.environ.get("DATABASE_URL")
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
@@ -35,13 +36,13 @@ if not BOT_TOKEN or not DATABASE_URL or not ADMIN_TOKEN:
 
 TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
-# PostgreSQL connection pool
+# --- [DATABASE POOL] ---
 try:
     pool = SimpleConnectionPool(1, 5, dsn=DATABASE_URL, sslmode='require')
 except Exception as e:
     raise RuntimeError(f"Database connection pool failed to initialize: {e}")
 
-# Rank labels
+# --- [RANKS] ---
 RANK_LABELS = {
     1: "🐣 Trainee Responder",
     2: "🧯 Drill Novice",
@@ -55,6 +56,7 @@ RANK_LABELS = {
     10: "🥷 Disaster Sensei"
 }
 
+# --- [HELPERS] ---
 def send_message(chat_id, text, reply_markup=None):
     payload = {
         "chat_id": chat_id,
@@ -64,8 +66,7 @@ def send_message(chat_id, text, reply_markup=None):
     if reply_markup:
         payload["reply_markup"] = json.dumps(reply_markup)
     try:
-        resp = requests.post(TELEGRAM_API, json=payload)
-        resp.raise_for_status()
+        requests.post(TELEGRAM_API, json=payload)
     except Exception as e:
         print(f"Error sending message: {e}", file=sys.stderr)
 
@@ -79,6 +80,7 @@ def safe_route(f):
             return "Internal error", 500
     return wrapper
 
+# --- [ROUTES] ---
 @app.route("/", methods=["GET"])
 def home():
     return "🚨 Disaster Sensei is running!", 200
@@ -136,14 +138,10 @@ def webhook():
 
     return "OK", 200
 
+# --- [USER SETUP] ---
 def init_user(chat_id, first_name=None):
     try:
         conn = pool.getconn()
-    except PoolError:
-        print("Connection pool exhausted", file=sys.stderr)
-        return
-
-    try:
         with conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT id FROM users WHERE id = %s", (chat_id,))
@@ -156,6 +154,7 @@ def init_user(chat_id, first_name=None):
     finally:
         pool.putconn(conn)
 
+# --- [DRILL HANDLER] ---
 @safe_route
 def handle_drill(chat_id):
     today = datetime.utcnow().date()
@@ -184,15 +183,15 @@ def handle_drill(chat_id):
                 cur.execute("UPDATE users SET current_q = %s WHERE id = %s", (json.dumps(question), chat_id))
 
                 options = [
-                    [{"text": "A 🅰️", "callback_data": "A"}],
-                    [{"text": "B 🅱️", "callback_data": "B"}],
-                    [{"text": "C ©️", "callback_data": "C"}],
-                    [{"text": "D 🔠", "callback_data": "D"}]
+                    [{"text": "A", "callback_data": "A"}],
+                    [{"text": "B", "callback_data": "B"}],
+                    [{"text": "C", "callback_data": "C"}],
+                    [{"text": "D", "callback_data": "D"}]
                 ]
 
                 q_text = (
                     f"*Drill {drills+1}/5*\n"
-                    f"🧩 *Scenario:*\n{question['scenario']}\n\n"
+                    f"Scenario:\n{question['scenario']}\n\n"
                     f"A. {question['A']}\n"
                     f"B. {question['B']}\n"
                     f"C. {question['C']}\n"
@@ -205,6 +204,7 @@ def handle_drill(chat_id):
 
     return "Drill sent", 200
 
+# --- [ANSWER HANDLER] ---
 @safe_route
 def handle_answer(chat_id, answer):
     conn = pool.getconn()
@@ -218,7 +218,6 @@ def handle_answer(chat_id, answer):
                     return "No active question", 200
 
                 current_q_json, xp, drills, streak, old_rank, last_drill_date = row
-
                 question = json.loads(current_q_json) if isinstance(current_q_json, str) else current_q_json
                 correct_answer = question["correct"]
                 feedback = question.get("feedback", {})
@@ -241,36 +240,36 @@ def handle_answer(chat_id, answer):
 
                 cur.execute("""
                     UPDATE users SET
-                        xp = %s,
-                        rank = %s,
-                        drills = %s,
-                        streak = %s,
-                        last_drill_date = %s,
-                        completed_today = %s,
-                        current_q = NULL
+                        xp = %s, rank = %s, drills = %s, streak = %s,
+                        last_drill_date = %s, completed_today = %s, current_q = NULL
                     WHERE id = %s
                 """, (new_xp, new_rank, new_drills, new_streak, today, completed_today, chat_id))
 
                 rank_label = RANK_LABELS.get(new_rank, "🌀 Unknown Rank")
                 myth = random.choice(MYTHBUSTERS)
-
                 msg = (
                     f"{feedback.get(answer, '🤔 Hmm... interesting choice.')}\n\n"
                     f"🎖 XP gained: +{gained_xp}\n"
                     f"🔥 Streak: {new_streak} day(s)\n"
                     f"🏅 Rank: {rank_label}\n\n"
-                    f"💡 *Disaster Decode:* _{myth}_"
+                    f"💡 Disaster Decode: _{myth}_"
                 )
+
+                if new_drills >= 5:
+                    msg += "\n\n📊 You've completed all 5 drills for today!\nType /profile to check your progress."
+                else:
+                    msg += "\n\n➡️ Type /drill to continue to the next question."
+
                 send_message(chat_id, msg)
     finally:
         pool.putconn(conn)
 
     return "Answer processed", 200
 
+# --- [PROFILE HANDLER] ---
 @safe_route
 def handle_profile(chat_id):
-    init_user(chat_id)  # ensure user exists
-
+    init_user(chat_id)
     conn = pool.getconn()
     try:
         with conn:
@@ -301,6 +300,7 @@ def handle_profile(chat_id):
 
     return "Profile sent", 200
 
+# --- [CLEANUP] ---
 @app.route("/cleanup", methods=["GET"])
 @safe_route
 def cleanup():
@@ -318,11 +318,13 @@ def cleanup():
 
     return "Daily drills reset for all users", 200
 
+# --- [ERROR HANDLER] ---
 @app.errorhandler(Exception)
 def global_error_handler(e):
     print(f"Global error: {e}", file=sys.stderr)
     return {"error": "Something went wrong."}, 500
 
+# --- [RUN FLASK] ---
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     print(f"🧠 Sensei is thinking... Flask is starting on port {port}.")
