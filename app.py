@@ -116,23 +116,41 @@ def webhook():
         return handle_profile(chat_id)
     elif text == "/about":
         send_message(chat_id,
-            "👨‍🏫 *Disaster Sensei*\n"
-            "Created by *Thomson* with love and resilience.\n"
-            "A Telegram bot to sharpen your disaster response skills.\n\n"
-            "⚠️ *Disclaimer:* For learning only — not a substitute for official training."
+            "🌐 *About Disaster Sensei*\n"
+            "Disaster Sensei is your personal crisis-training companion — built to sharpen your instincts, strengthen decision-making, and turn knowledge into life-saving reflexes. Each day, you'll face realistic drills, debunk survival myths, and earn ranks as you level up your readiness.\n"
+            "👨‍💻 Created by Thomson — where technology meets preparedness to empower individuals before the moment strikes.\n"
+            "⚠️ Note: This is an educational tool. Always follow guidance from certified emergency services during real-world situations."
         )
     elif text == "/help":
         send_message(chat_id,
-            "🆘 *Available Commands:*\n"
-            "/start - Welcome message\n"
-            "/drill - Start daily drills (max 5 per day)\n"
-            "/profile - Show your stats\n"
-            "/about - About this bot\n"
-            "/myth - Get a mythbusting fact"
+            "🧰 *Sensei’s Toolbox*\n\n"
+            "/start – Step into the Dojo and commence your mastery journey\n"
+            "/drill – Engage in daily high-impact survival drills (max 5 per day)\n"
+            "/profile – Review your progress: experience, rank, streak, and growth\n"
+            "/myth – Demystify common disaster myths with expert insights\n"
+            "/about – Discover the mission powering Disaster Sensei\n"
+            "/ranks – 📈 View all response ranks and how you can rise through them\n\n"
+            "⚡ Forge your resilience. Hone your instincts. Earn your stripes."
         )
     elif text == "/myth":
         myth = random.choice(MYTHBUSTERS)
         send_message(chat_id, f"💡 *Disaster Decode*\n_{myth}_")
+    elif text == "/ranks":
+        ranks_list_text = (
+            "🎖 *Rank Progression in Disaster Sensei*\n\n"
+            "1️⃣ 🐣 Trainee Responder – Just getting started\n"
+            "2️⃣ 🧯 Drill Novice – Warming up to the drills\n"
+            "3️⃣ 🚒 Ember Fighter – Learning to take control\n"
+            "4️⃣ 🏕️ Survivalist – Sharpened in basics\n"
+            "5️⃣ 🧠 Wise Responder – Thinking before reacting\n"
+            "6️⃣ 🔥 Hazard Handler – Calm in chaos\n"
+            "7️⃣ 🚨 Alert Ace – Ready for anything\n"
+            "8️⃣ 🛰️ Crisis Commander – Strategist under pressure\n"
+            "9️⃣ 🎖️ Master Responder – Elite level awareness\n"
+            "🔟 🥷 Disaster Sensei – The ultimate responder\n\n"
+            "🏆 Ranks are earned through experience (XP). Complete drills daily to rise in the ranks and sharpen your disaster readiness."
+        )
+        send_message(chat_id, ranks_list_text)
     else:
         send_message(chat_id, "❓ Unknown command. Try /help.")
 
