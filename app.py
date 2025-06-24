@@ -12,36 +12,27 @@ from psycopg2.pool import SimpleConnectionPool, PoolError
 app = Flask(__name__)
 print("🧠 Sensei is thinking... Flask is starting.")
 
-# Load questions and mythbusters safely
-try:
-    with open("data.json", encoding="utf-8") as f:
-        QUESTIONS = json.load(f)
-except Exception as e:
-    raise RuntimeError(f"Failed to load data.json: {e}")
+# Load data
+with open("data.json", encoding="utf-8") as f:
+    QUESTIONS = json.load(f)
 
-try:
-    with open("mythbusters.json", encoding="utf-8") as f:
-        MYTHBUSTERS = json.load(f)
-except Exception as e:
-    raise RuntimeError(f"Failed to load mythbusters.json: {e}")
+with open("mythbusters.json", encoding="utf-8") as f:
+    MYTHBUSTERS = json.load(f)
 
-# Environment variables
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 DATABASE_URL = os.environ.get("DATABASE_URL")
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN")
 
 if not BOT_TOKEN or not DATABASE_URL or not ADMIN_TOKEN:
-    raise Exception("Please set BOT_TOKEN, DATABASE_URL and ADMIN_TOKEN environment variables.")
+    raise Exception("Missing BOT_TOKEN, DATABASE_URL or ADMIN_TOKEN.")
 
 TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
-# PostgreSQL connection pool
 try:
     pool = SimpleConnectionPool(1, 5, dsn=DATABASE_URL, sslmode='require')
 except Exception as e:
-    raise RuntimeError(f"Database connection pool failed to initialize: {e}")
+    raise RuntimeError(f"Failed to initialize DB pool: {e}")
 
-# Rank labels
 RANK_LABELS = {
     1: "🐣 Trainee Responder",
     2: "🧯 Drill Novice",
@@ -64,8 +55,7 @@ def send_message(chat_id, text, reply_markup=None):
     if reply_markup:
         payload["reply_markup"] = json.dumps(reply_markup)
     try:
-        resp = requests.post(TELEGRAM_API, json=payload)
-        resp.raise_for_status()
+        requests.post(TELEGRAM_API, json=payload).raise_for_status()
     except Exception as e:
         print(f"Error sending message: {e}", file=sys.stderr)
 
@@ -115,17 +105,17 @@ def webhook():
     elif text == "/about":
         send_message(chat_id,
             "👨‍🏫 *Disaster Sensei*\n"
-            "Created by *Thomson*.\n"
-            "An interactive bot teaching disaster preparedness.\n"
-            "Panic is the enemy, preparation is power."
+            "An interactive survival bot for training your instincts in daily disaster drills.\n"
+            "Sharpen your mind, not just your pencils. 🧠\n\n"
+            "⚠️ *Disclaimer:* This bot provides educational safety guidance. It is not a substitute for professional emergency services."
         )
     elif text == "/help":
         send_message(chat_id,
-            "🆘 *Available Commands:*\n"
-            "/start - Welcome message\n"
-            "/drill - Start daily drills (max 5 per day)\n"
-            "/profile - Show your stats\n"
-            "/about - About this bot"
+            "🆘 *Commands:*\n"
+            "/start - Welcome intro\n"
+            "/drill - Begin today's 5-question drill\n"
+            "/profile - View your stats\n"
+            "/about - Info & disclaimer"
         )
     else:
         send_message(chat_id, "❓ Unknown command. Try /help.")
@@ -160,8 +150,7 @@ def handle_drill(chat_id):
         with conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT drills, completed_today, last_drill_date FROM users WHERE id = %s", (chat_id,))
-                row = cur.fetchone()
-                drills, completed_today, last_drill_date = row if row else (0, False, None)
+                drills, completed_today, last_drill_date = cur.fetchone()
 
                 if not last_drill_date or last_drill_date < today:
                     drills = 0
@@ -172,29 +161,37 @@ def handle_drill(chat_id):
                     )
 
                 if completed_today or drills >= 5:
-                    send_message(chat_id, "✅ You've completed today's 5-question drill. Come back tomorrow!")
-                    return "Limit reached", 200
+                    cur.execute("SELECT xp, rank, streak FROM users WHERE id = %s", (chat_id,))
+                    xp, rank, streak = cur.fetchone()
+                    rank_label = RANK_LABELS.get(rank, "Unknown Rank")
+                    xp_to_next = (rank * 50) - xp if rank < 10 else 0
+                    myth = random.choice(MYTHBUSTERS)
+
+                    send_message(chat_id,
+                        f"🎉 *Daily Drill Completed!*\n\n"
+                        f"🎖 XP earned today: {drills * 10}\n"
+                        f"🔥 Streak: {streak} day(s)\n"
+                        f"🏅 Rank: {rank_label}\n"
+                        f"📈 XP to next rank: {xp_to_next}\n\n"
+                        f"🧠 *Disaster Decode:*\n_{myth}_",
+                        reply_markup={
+                            "inline_keyboard": [[
+                                {"text": "View Profile", "callback_data": "profile"}
+                            ]]
+                        }
+                    )
+                    return "Done", 200
 
                 question = random.choice(QUESTIONS)
-
                 cur.execute("UPDATE users SET current_q = %s WHERE id = %s", (json.dumps(question), chat_id))
 
+                q_text = f"🧩 *Q{drills+1}/5:*\n{question['scenario']}"
                 options = [
                     [{"text": f"A", "callback_data": "A"}],
                     [{"text": f"B", "callback_data": "B"}],
                     [{"text": f"C", "callback_data": "C"}],
-                    [{"text": f"D", "callback_data": "D"}]
+                    [{"text": f"D", "callback_data": "D"}],
                 ]
-
-                q_text = (
-                    f"*Drill {drills+1}/5*\n"
-                    f"🧩 *Scenario:*\n{question['scenario']}\n\n"
-                    f"A. {question['A']}\n"
-                    f"B. {question['B']}\n"
-                    f"C. {question['C']}\n"
-                    f"D. {question['D']}"
-                )
-
                 send_message(chat_id, q_text, reply_markup={"inline_keyboard": options})
     finally:
         pool.putconn(conn)
@@ -203,65 +200,51 @@ def handle_drill(chat_id):
 
 @safe_route
 def handle_answer(chat_id, answer):
+    if answer == "profile":
+        return handle_profile(chat_id)
+
     conn = pool.getconn()
     try:
         with conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT current_q, xp, drills, streak, last_drill_date FROM users WHERE id = %s", (chat_id,))
+                cur.execute("SELECT current_q, xp, drills, streak, rank, last_drill_date FROM users WHERE id = %s", (chat_id,))
                 row = cur.fetchone()
                 if not row or not row[0]:
-                    send_message(chat_id, "🚫 No active question. Use /drill to start your daily drills.")
+                    send_message(chat_id, "🚫 No active question. Use /drill to begin.")
                     return "No active question", 200
 
-                current_q_json, xp, drills, streak, last_drill_date = row
+                current_q, xp, drills, streak, rank, last_drill_date = row
+                q = json.loads(current_q)
 
-                # ✅ FIX: Only decode if it's a string
-                if isinstance(current_q_json, str):
-                    question = json.loads(current_q_json)
-                else:
-                    question = current_q_json
-
-                correct_answer = question["correct"]
-                feedback = question["feedback"]
-                today = datetime.utcnow().date()
-
-                gained_xp = 10 if answer == correct_answer else 0
-                new_xp = xp + gained_xp
+                correct = q["correct"]
+                gained = 10 if answer == correct else 0
+                new_xp = xp + gained
                 new_rank = min(new_xp // 50 + 1, 10)
 
-                if last_drill_date == today - timedelta(days=1):
-                    new_streak = streak + 1
-                elif last_drill_date == today:
-                    new_streak = streak
-                else:
-                    new_streak = 1
+                if last_drill_date == datetime.utcnow().date() - timedelta(days=1):
+                    streak += 1
+                elif last_drill_date < datetime.utcnow().date():
+                    streak = 1
 
-                new_drills = drills + 1
-                completed_today = new_drills >= 5
+                drills += 1
+                completed_today = drills >= 5
 
                 cur.execute("""
-                    UPDATE users SET
-                        xp = %s,
-                        rank = %s,
-                        drills = %s,
-                        streak = %s,
-                        last_drill_date = %s,
-                        completed_today = %s,
-                        current_q = NULL
+                    UPDATE users SET xp = %s, rank = %s, streak = %s, drills = %s, completed_today = %s, current_q = NULL, last_drill_date = %s
                     WHERE id = %s
-                """, (new_xp, new_rank, new_drills, new_streak, today, completed_today, chat_id))
+                """, (new_xp, new_rank, streak, drills, completed_today, datetime.utcnow().date(), chat_id))
 
-                rank_label = RANK_LABELS.get(new_rank, "🌀 Unknown Rank")
-                myth = random.choice(MYTHBUSTERS)
-
-                msg = (
-                    f"{feedback.get(answer, '🤔 Hmm... interesting choice.')}\n\n"
-                    f"🎖 XP gained: +{gained_xp}\n"
-                    f"🔥 Streak: {new_streak} day(s)\n"
-                    f"🏅 Rank: {rank_label}\n\n"
-                    f"💡 *Mythbuster:* _{myth}_"
+                reply = (
+                    f"{q['feedback'][answer]}\n\n"
+                    f"🎖 *XP gained:* +{gained}"
                 )
-                send_message(chat_id, msg)
+                if drills < 5:
+                    send_message(chat_id, reply, reply_markup={
+                        "inline_keyboard": [[{"text": "Next ➡️", "callback_data": "next"}]]
+                    })
+                else:
+                    send_message(chat_id, reply)
+                    return handle_drill(chat_id)
     finally:
         pool.putconn(conn)
 
@@ -273,28 +256,20 @@ def handle_profile(chat_id):
     try:
         with conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT xp, rank, drills, streak FROM users WHERE id = %s", (chat_id,))
-                row = cur.fetchone()
-                if not row:
-                    send_message(chat_id, "No profile found. Use /start first.")
-                    return "No profile", 200
+                cur.execute("SELECT xp, rank, streak FROM users WHERE id = %s", (chat_id,))
+                xp, rank, streak = cur.fetchone()
+                label = RANK_LABELS.get(rank, "Unknown Rank")
+                progress = "🟩" * min(rank, 10) + "⬜" * (10 - min(rank, 10))
 
-                xp, rank, drills, streak = row
-                rank_label = RANK_LABELS.get(rank, "🌀 Unknown Rank")
-                progress_bar = "🟩" * min(rank, 10) + "⬜" * (10 - min(rank, 10))
-
-                msg = (
-                    f"🏅 *Your Profile*\n"
+                send_message(chat_id,
+                    f"📊 *Your Profile*\n\n"
                     f"XP: {xp}\n"
-                    f"Rank: {rank_label}\n"
-                    f"Progress: {progress_bar}\n"
+                    f"Rank: {label}\n"
                     f"🔥 Streak: {streak} day(s)\n"
-                    f"Drills today: {drills}/5"
+                    f"Progress: {progress}"
                 )
-                send_message(chat_id, msg)
     finally:
         pool.putconn(conn)
-
     return "Profile sent", 200
 
 @app.route("/cleanup", methods=["GET"])
@@ -312,7 +287,7 @@ def cleanup():
     finally:
         pool.putconn(conn)
 
-    return "Daily drills reset for all users", 200
+    return "Drills reset", 200
 
 @app.errorhandler(Exception)
 def global_error_handler(e):
@@ -321,5 +296,5 @@ def global_error_handler(e):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
-    print(f"🧠 Sensei is thinking... Flask is starting on port {port}.")
     app.run(debug=False, host="0.0.0.0", port=port)
+
