@@ -4,286 +4,370 @@ import random
 import psycopg2
 from flask import Flask, request
 import requests
-from functools import wraps
 
 app = Flask(__name__)
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
+BOT_TOKEN = os.environ['BOT_TOKEN']
 TELEGRAM_API = f"https://api.telegram.org/bot{BOT_TOKEN}/"
 
-# Load scenarios from data.json
-with open("data.json", "r", encoding="utf-8") as f:
-    SCENARIOS = json.load(f)
+DATABASE_URL = os.environ['DATABASE_URL']
 
-# Load mythbusters from mythbusters.json
-with open("mythbusters.json", "r", encoding="utf-8") as f:
-    MYTHS = json.load(f)
-
-# Connect to Postgres
-conn = psycopg2.connect(os.environ.get("DATABASE_URL"), sslmode='require')
+# Connect to PostgreSQL database
+conn = psycopg2.connect(DATABASE_URL)
 conn.autocommit = True
+cursor = conn.cursor()
 
-def safe_route(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        try:
-            return f(*args, **kwargs)
-        except Exception as e:
-            print(f"Error: {e}")
-            return "Internal Error", 500
-    return decorated
+# Load scenarios from file
+with open("data.json", "r", encoding="utf-8") as f:
+    scenarios = json.load(f)
 
-def send_message(chat_id, text, reply_markup=None, parse_mode="Markdown"):
-    payload = {
-        "chat_id": chat_id,
-        "text": text,
-        "parse_mode": parse_mode,
-    }
-    if reply_markup:
-        payload["reply_markup"] = json.dumps(reply_markup)
-    requests.post(TELEGRAM_API + "sendMessage", data=payload)
+# Load mythbusters from file
+with open("mythbusters.json", "r", encoding="utf-8") as f:
+    mythbusters = json.load(f)
 
 def get_user(chat_id):
-    with conn.cursor() as cur:
-        cur.execute("SELECT first_name, xp, streak, rank, drills, completed_today, last_drill_date, current_q FROM users WHERE id=%s", (chat_id,))
-        return cur.fetchone()
+    cursor.execute("SELECT id, first_name, xp, streak, rank, drills, completed_today, last_drill_date, current_q FROM users WHERE id=%s", (chat_id,))
+    return cursor.fetchone()
 
 def create_user(chat_id, first_name):
-    with conn.cursor() as cur:
-        cur.execute("""
-            INSERT INTO users (id, first_name, xp, streak, rank, drills, completed_today, last_drill_date, current_q)
-            VALUES (%s, %s, 0, 0, 1, 0, 0, NULL, 0)
-            ON CONFLICT (id) DO NOTHING
-        """, (chat_id, first_name))
+    cursor.execute(
+        "INSERT INTO users (id, first_name, xp, streak, rank, drills, completed_today, last_drill_date, current_q) VALUES (%s, %s, 0, 0, 'Novice', 0, 0, NULL, NULL)",
+        (chat_id, first_name)
+    )
 
-def update_user_progress(chat_id, **kwargs):
-    keys = ", ".join(f"{k} = %s" for k in kwargs.keys())
-    vals = list(kwargs.values())
-    vals.append(chat_id)
-    with conn.cursor() as cur:
-        cur.execute(f"UPDATE users SET {keys} WHERE id = %s", vals)
+def update_user_progress(chat_id, xp=None, streak=None, rank=None, drills=None, completed_today=None, last_drill_date=None, current_q=None):
+    # Build dynamic update query parts
+    updates = []
+    params = []
+    if xp is not None:
+        updates.append("xp = %s")
+        params.append(xp)
+    if streak is not None:
+        updates.append("streak = %s")
+        params.append(streak)
+    if rank is not None:
+        updates.append("rank = %s")
+        params.append(rank)
+    if drills is not None:
+        updates.append("drills = %s")
+        params.append(drills)
+    if completed_today is not None:
+        updates.append("completed_today = %s")
+        params.append(completed_today)
+    if last_drill_date is not None:
+        updates.append("last_drill_date = %s")
+        params.append(last_drill_date)
+    if current_q is not None:
+        updates.append("current_q = %s")
+        params.append(json.dumps(current_q) if isinstance(current_q, dict) else current_q)
+    else:
+        # If current_q explicitly passed as None, set to NULL in DB
+        updates.append("current_q = NULL")
 
-def rank_name(rank):
-    ranks = {
-        1: "Novice",
-        2: "Apprentice",
-        3: "Adept",
-        4: "Expert",
-        5: "Sensei"
+    params.append(chat_id)
+    query = f"UPDATE users SET {', '.join(updates)} WHERE id = %s"
+    cursor.execute(query, tuple(params))
+
+def get_rank(xp):
+    if xp >= 500:
+        return "Master"
+    elif xp >= 250:
+        return "Advanced"
+    elif xp >= 100:
+        return "Intermediate"
+    else:
+        return "Novice"
+
+def get_next_rank_xp(xp):
+    if xp < 100:
+        return 100 - xp
+    elif xp < 250:
+        return 250 - xp
+    elif xp < 500:
+        return 500 - xp
+    else:
+        return 0
+
+def send_message(chat_id, text, reply_markup=None):
+    data = {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "Markdown"
     }
-    return ranks.get(rank, "Legend")
+    if reply_markup:
+        data["reply_markup"] = json.dumps(reply_markup)
+    requests.post(f"{TELEGRAM_API}sendMessage", data=data)
 
-def xp_to_next_rank(rank):
-    thresholds = {1: 100, 2: 300, 3: 600, 4: 1000, 5: 2000}
-    return thresholds.get(rank, 9999)
+def send_profile(chat_id, user):
+    xp = user[2]
+    streak = user[3]
+    rank = user[4]
+    progress = xp / 500  # progress towards max rank, max 500 xp
 
-def init_user(chat_id, first_name):
-    user = get_user(chat_id)
-    if not user:
-        create_user(chat_id, first_name)
+    progress_bar_length = 20
+    filled_length = int(progress_bar_length * min(progress, 1))
+    bar = "🟩" * filled_length + "⬜" * (progress_bar_length - filled_length)
 
-def build_options_keyboard():
-    return {
+    profile_text = (
+        f"🏆 *Your Profile*\n"
+        f"XP: *{xp}*\n"
+        f"Rank: *{rank}*\n"
+        f"Streak: *{streak}*\n"
+        f"Progress to next rank:\n{bar}"
+    )
+    send_message(chat_id, profile_text)
+
+def send_about(chat_id):
+    about_text = (
+        "🧠 *Disaster Sensei* — Your daily disaster safety drill bot!\n\n"
+        "Sharpen your skills with quick, fun, and challenging emergency scenarios.\n"
+        "Learn smart safety moves with humor and bite-sized lessons.\n\n"
+        "_Disclaimer:_ This bot provides educational guidance only. "
+        "In real emergencies, always follow professional advice and local authorities."
+    )
+    send_message(chat_id, about_text)
+
+def get_question_inline_keyboard(scenario):
+    keyboard = {
         "inline_keyboard": [
             [
-                {"text": "A", "callback_data": "A"},
-                {"text": "B", "callback_data": "B"},
-                {"text": "C", "callback_data": "C"},
-                {"text": "D", "callback_data": "D"}
+                {"text": "A", "callback_data": "answer_A"},
+                {"text": "B", "callback_data": "answer_B"},
+                {"text": "C", "callback_data": "answer_C"},
+                {"text": "D", "callback_data": "answer_D"},
             ]
         ]
     }
+    return keyboard
 
-def build_next_button():
-    return {
-        "inline_keyboard": [
-            [{"text": "Next ▶️", "callback_data": "NEXT_QUESTION"}]
-        ]
-    }
-
-def build_profile_button():
-    return {
-        "inline_keyboard": [
-            [{"text": "View Profile 📊", "callback_data": "VIEW_PROFILE"}]
-        ]
-    }
-
-def get_disaster_decode_tip():
-    # Pick a random myth from mythbusters.json
-    myth = random.choice(MYTHS)
-    return f"💡 *Disaster Decode:* {myth}"
-
-def handle_drill(chat_id):
-    user = get_user(chat_id)
-    if not user:
-        send_message(chat_id, "Please /start first.")
-        return "OK", 200
-
-    first_name, xp, streak, rank, drills, completed_today, last_drill_date, current_q = user
-
-    from datetime import date
-    today = date.today()
-    if last_drill_date != today:
-        completed_today = 0
-        drills = 0
-        update_user_progress(chat_id, completed_today=0, drills=0, last_drill_date=today)
-
-    if completed_today >= 5:
-        send_message(chat_id, "🎉 You've completed your 5 daily drills! Come back tomorrow for more wisdom.")
-        return "OK", 200
-
-    question_index = completed_today
-    scenario = SCENARIOS[question_index]
-
-    update_user_progress(chat_id, current_q=question_index)
-
-    # No puzzle emoji in scenario, just text
-    text = f"{scenario['scenario']} (Question {question_index+1} of 5)\n\nSelect your answer:"
-
-    keyboard = build_options_keyboard()
+def send_question(chat_id, question_index):
+    scenario = scenarios[question_index]
+    text = f"{scenario['scenario']}\n\n" \
+           f"A. {scenario['A']}\n" \
+           f"B. {scenario['B']}\n" \
+           f"C. {scenario['C']}\n" \
+           f"D. {scenario['D']}"
+    keyboard = get_question_inline_keyboard(scenario)
     send_message(chat_id, text, reply_markup=keyboard)
 
-    return "OK", 200
+def send_end_of_drill_summary(chat_id, total_xp, streak, rank, xp_to_next_rank):
+    myth_name = "Disaster Decode"
+    text = (
+        f"🎉 *Drill Complete!*\n\n"
+        f"✅ Total XP earned today: *{total_xp}*\n"
+        f"🔥 Current streak: *{streak}*\n"
+        f"🏅 Rank: *{rank}*\n"
+        f"📈 XP to next rank: *{xp_to_next_rank}*\n\n"
+        f"💡 *{myth_name}* keeps you sharp every day!"
+    )
+    keyboard = {
+        "inline_keyboard": [
+            [
+                {"text": "View Profile", "callback_data": "view_profile"},
+                {"text": "Start New Drill", "callback_data": "start_drill"}
+            ]
+        ]
+    }
+    send_message(chat_id, text, reply_markup=keyboard)
 
-def handle_answer(chat_id, answer):
+@app.route("/start", methods=["POST"])
+def start():
+    data = request.get_json()
+    chat_id = data['message']['chat']['id']
+    first_name = data['message']['chat'].get('first_name', 'Sensei')
+
     user = get_user(chat_id)
     if not user:
-        send_message(chat_id, "Please /start first.")
-        return "OK", 200
+        create_user(chat_id, first_name)
+        user = get_user(chat_id)
 
-    first_name, xp, streak, rank, drills, completed_today, last_drill_date, current_q = user
+    welcome_text = f"👋 Hello, {first_name}! Ready to start your disaster drill? Use /drill to begin."
+    send_message(chat_id, welcome_text)
+    return {"ok": True}
 
-    if current_q is None or current_q >= len(SCENARIOS):
-        send_message(chat_id, "No active drill. Use /drill to start.")
-        return "OK", 200
+@app.route("/about", methods=["POST"])
+def about():
+    data = request.get_json()
+    chat_id = data['message']['chat']['id']
+    send_about(chat_id)
+    return {"ok": True}
 
-    scenario = SCENARIOS[current_q]
+@app.route("/profile", methods=["POST"])
+def profile():
+    data = request.get_json()
+    chat_id = data['message']['chat']['id']
 
-    correct_answer = scenario["correct"]
-    feedback = scenario["feedback"]
-
-    earned_xp = 10 if answer == correct_answer else 0
-
-    new_xp = xp + earned_xp
-    new_streak = streak + 1 if earned_xp == 10 else 0
-    new_completed_today = completed_today + 1
-
-    needed_for_next = xp_to_next_rank(rank)
-    new_rank = rank
-    if new_xp >= needed_for_next:
-        new_rank = rank + 1
-
-    update_user_progress(
-        chat_id,
-        xp=new_xp,
-        streak=new_streak,
-        rank=new_rank,
-        completed_today=new_completed_today,
-        drills=drills + 1,
-        current_q=None
-    )
-
-    feedback_text = feedback.get(answer, "Invalid answer option.")
-    msg = f"{feedback_text}\n\nXP Earned: {earned_xp} ⚡"
-
-    if new_completed_today < 5:
-        keyboard = build_next_button()
-    else:
-        needed_for_next = xp_to_next_rank(new_rank) - new_xp
-        summary = (
-            f"🏁 *Drill Complete!*\n\n"
-            f"✅ Total XP earned today: {new_xp - xp} ⚡\n"
-            f"🔥 Streak: {new_streak}\n"
-            f"🏅 Rank: {rank_name(new_rank)}\n"
-            f"📈 XP to next rank: {needed_for_next}\n\n"
-            f"{get_disaster_decode_tip()}"
-        )
-        keyboard = build_profile_button()
-        msg = summary
-
-    send_message(chat_id, msg, reply_markup=keyboard)
-    return "OK", 200
-
-def handle_profile(chat_id):
     user = get_user(chat_id)
     if not user:
-        send_message(chat_id, "Please /start first.")
-        return "OK", 200
+        send_message(chat_id, "User not found. Use /start to register.")
+        return {"ok": True}
 
-    first_name, xp, streak, rank, drills, completed_today, last_drill_date, current_q = user
+    send_profile(chat_id, user)
+    return {"ok": True}
 
-    needed_xp = xp_to_next_rank(rank)
-    progress = int((xp / needed_xp) * 20)
-    progress_bar = "█" * progress + "░" * (20 - progress)
+@app.route("/drill", methods=["POST"])
+def drill():
+    data = request.get_json()
+    chat_id = data['message']['chat']['id']
+    user = get_user(chat_id)
 
-    msg = (
-        f"📊 *Your Profile*\n\n"
-        f"XP: {xp} ⚡\n"
-        f"Rank: {rank_name(rank)} 🏅\n"
-        f"Streak: {streak} 🔥\n"
-        f"Progress to next rank:\n`{progress_bar}`\n"
-    )
-    send_message(chat_id, msg)
-    return "OK", 200
+    if not user:
+        send_message(chat_id, "Please start first using /start.")
+        return {"ok": True}
+
+    # Start the drill from question 0
+    update_user_progress(chat_id, current_q={"index": 0, "xp_gained": 0, "total_xp": 0, "answers": []})
+    send_question(chat_id, 0)
+    return {"ok": True}
 
 @app.route("/", methods=["POST"])
-@safe_route
 def webhook():
     data = request.get_json()
+    if "callback_query" in data:
+        callback_query = data["callback_query"]
+        chat_id = callback_query["message"]["chat"]["id"]
+        message_id = callback_query["message"]["message_id"]
+        data_callback = callback_query["data"]
 
-    if "message" in data:
-        chat_id = data["message"]["chat"]["id"]
-        first_name = data["message"]["chat"].get("first_name")
-        text = data["message"].get("text", "").strip()
+        user = get_user(chat_id)
+        if not user:
+            send_message(chat_id, "Please start using /start first.")
+            return {"ok": True}
 
-        init_user(chat_id, first_name)
+        current_q = user[8]  # current_q JSON from DB
+
+        # If current_q is None, ask user to start drill
+        if not current_q:
+            send_message(chat_id, "Please start a drill first with /drill.")
+            return {"ok": True}
+
+        if data_callback.startswith("answer_"):
+            selected_option = data_callback[-1]  # 'A', 'B', 'C', or 'D'
+            question_index = current_q["index"]
+            scenario = scenarios[question_index]
+
+            # Prevent double answering by checking if this question already answered
+            if question_index < len(current_q["answers"]):
+                # Already answered this question
+                send_message(chat_id, "You already answered this question. Click Next to continue.")
+                return {"ok": True}
+
+            correct_option = scenario["correct"]
+            is_correct = selected_option == correct_option
+
+            gained_xp = 10 if is_correct else 0
+
+            # Streak only increments if correct answer, else reset to 0
+            current_streak = user[3]
+            new_streak = current_streak + 1 if is_correct else 0
+
+            new_xp = user[2] + gained_xp
+            new_rank = get_rank(new_xp)
+            new_completed_today = user[6] + 1
+            new_drills = user[5]
+
+            # Prepare feedback message
+            feedback_msg = scenario["feedback"][selected_option]
+            xp_msg = f"🎉 You earned *{gained_xp} XP!*"
+
+            # Update user progress for this question
+            updated_answers = current_q["answers"] + [selected_option]
+            total_xp_so_far = current_q["total_xp"] + gained_xp
+
+            # Update DB with new progress but keep current_q json updated
+            update_user_progress(
+                chat_id,
+                xp=new_xp,
+                streak=new_streak,
+                rank=new_rank,
+                completed_today=new_completed_today,
+                drills=new_drills,
+                current_q={
+                    "index": question_index,
+                    "xp_gained": gained_xp,
+                    "total_xp": total_xp_so_far,
+                    "answers": updated_answers,
+                }
+            )
+
+            # Send feedback and XP message
+            send_message(chat_id, f"{feedback_msg}\n\n{xp_msg}")
+
+            # If less than 4 questions answered, send "Next" button inline
+            if question_index < 4:
+                keyboard = {
+                    "inline_keyboard": [
+                        [{"text": "Next ➡️", "callback_data": "next_question"}]
+                    ]
+                }
+                send_message(chat_id, "Ready for the next question?", reply_markup=keyboard)
+            else:
+                # Drill completed - show summary
+                xp_to_next_rank = get_next_rank_xp(new_xp)
+                send_end_of_drill_summary(chat_id, total_xp_so_far, new_streak, new_rank, xp_to_next_rank)
+                # Clear current_q after drill
+                update_user_progress(chat_id, current_q=None)
+
+        elif data_callback == "next_question":
+            current_q = user[8]
+            next_index = current_q["index"] + 1
+            # Update current_q index for next question but keep answers etc.
+            update_user_progress(
+                chat_id,
+                current_q={
+                    "index": next_index,
+                    "xp_gained": 0,
+                    "total_xp": current_q["total_xp"],
+                    "answers": current_q["answers"],
+                }
+            )
+            send_question(chat_id, next_index)
+
+        elif data_callback == "view_profile":
+            user = get_user(chat_id)
+            send_profile(chat_id, user)
+
+        elif data_callback == "start_drill":
+            update_user_progress(chat_id, current_q={"index": 0, "xp_gained": 0, "total_xp": 0, "answers": []})
+            send_question(chat_id, 0)
+
+        else:
+            send_message(chat_id, "Unknown action. Use /drill to start.")
+
+    elif "message" in data:
+        message = data["message"]
+        chat_id = message["chat"]["id"]
+        text = message.get("text", "")
 
         if text == "/start":
-            send_message(chat_id,
-                f"👋 Welcome, {first_name or 'Survivor'}!\n"
-                "Train your instincts in Disaster Sensei Dojo.\n\n"
-                "Type /drill to begin your daily survival drill.\n"
-                "Use /help for commands."
-            )
+            first_name = message["chat"].get("first_name", "Sensei")
+            user = get_user(chat_id)
+            if not user:
+                create_user(chat_id, first_name)
+            send_message(chat_id, f"👋 Hello, {first_name}! Ready to start your disaster drill? Use /drill to begin.")
+
         elif text == "/drill":
-            return handle_drill(chat_id)
+            user = get_user(chat_id)
+            if not user:
+                send_message(chat_id, "Please /start first.")
+                return {"ok": True}
+            update_user_progress(chat_id, current_q={"index": 0, "xp_gained": 0, "total_xp": 0, "answers": []})
+            send_question(chat_id, 0)
+
         elif text == "/profile":
-            return handle_profile(chat_id)
+            user = get_user(chat_id)
+            if not user:
+                send_message(chat_id, "User not found. Use /start to register.")
+                return {"ok": True}
+            send_profile(chat_id, user)
+
         elif text == "/about":
-            send_message(chat_id,
-                "🧠 *Disaster Sensei*\n"
-                "Your personal guide to mastering disaster preparedness with fun, smarts, and quick wit! 🚀\n\n"
-                "⚠️ *Disclaimer:* This bot offers educational safety guidance and is NOT a substitute for professional emergency services. Stay safe and always call emergency responders when needed!"
-            )
-        elif text == "/help":
-            send_message(chat_id,
-                "🆘 *Available Commands:*\n"
-                "/start - Welcome message\n"
-                "/drill - Start daily drills (max 5 per day)\n"
-                "/profile - Show your stats\n"
-                "/about - About this bot"
-            )
+            send_about(chat_id)
+
         else:
-            send_message(chat_id, "❓ Unknown command. Try /help.")
+            send_message(chat_id, "Use /start, /drill, /profile, or /about.")
 
-        return "OK", 200
-
-    elif "callback_query" in data:
-        chat_id = data["callback_query"]["message"]["chat"]["id"]
-        callback_data = data["callback_query"]["data"]
-
-        if callback_data == "VIEW_PROFILE":
-            return handle_profile(chat_id)
-        elif callback_data == "NEXT_QUESTION":
-            return handle_drill(chat_id)
-        elif callback_data in ["A", "B", "C", "D"]:
-            return handle_answer(chat_id, callback_data)
-        else:
-            send_message(chat_id, "❓ Unknown action.")
-            return "OK", 200
-
-    else:
-        return "Unsupported update", 400
+    return {"ok": True}
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=int(os.environ.get("PORT", 5000)))
