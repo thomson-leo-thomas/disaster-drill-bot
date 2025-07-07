@@ -1,142 +1,772 @@
 [
   {
-    "scenario": "🔥 You’re frying pakoras and suddenly the oil catches fire. What’s the right move?",
-    "A": "Throw water on it, duh",
-    "B": "Cover it with a metal lid and turn off the stove",
-    "C": "Blow on it like it’s a birthday candle",
-    "D": "Call your neighbor mid-panic",
-    "correct": "B",
-    "feedback": {
-      "A": "❌ Oil + water = firework show. 🎆 Not today!",
-      "B": "✅ Smother the flame, starve the fire. Chef + safety! 👨‍🍳",
-      "C": "❌ Unless your lungs have extinguisher mode, nope. 😂",
-      "D": "❌ Neighbor isn’t a firefighter. 🔥"
-    }
-  },
-  {
-    "scenario": "🌧️ You’re in a car and it starts flooding outside. What’s your genius play?",
-    "A": "Open the door to check water level",
-    "B": "Drive deeper to test your car’s swimming skills",
-    "C": "Turn off the engine and climb to the roof",
-    "D": "Text group chat ‘I might float away lol’",
+    "scenario": "🔥 You wake up to smoke filling your bedroom, but no fire is visible. What should you do first?",
+    "A": "Stand up and look for the source",
+    "B": "Turn on the lights and open windows",
+    "C": "Drop low, crawl out, and close the door behind you",
+    "D": "Call for help from your bed",
     "correct": "C",
     "feedback": {
-      "A": "❌ That water’s not here for a chat. 🌊",
-      "B": "❌ It’s a car, not a submarine.",
-      "C": "✅ Elevation = survival. Roof it. 🚗⬆️",
-      "D": "❌ Priorities, please. 📵"
+      "A": "❌ Standing up puts you right in the toxic smoke layer. Never rise in a smoke-filled room.",
+      "B": "❌ Oxygen fuels fire. Opening windows can worsen the blaze.",
+      "C": "✅ Smoke rises. Crawling helps you breathe better and escape safely. Smart move!",
+      "D": "❌ Calling won’t help if you’re trapped. Escape is the first priority."
     }
   },
   {
-    "scenario": "🧃 You feel dizzy and weak after skipping breakfast. What's smart?",
-    "A": "Chug soda for energy",
-    "B": "Eat a balanced snack and rest",
-    "C": "Ignore it because ‘grind never stops’",
-    "D": "Challenge your body with a push-up",
+    "scenario": "⚡ You witness someone collapse after touching a live wire. What’s the best first response?",
+    "A": "Grab them with your hands to pull them away",
+    "B": "Use a dry wooden stick to separate them from the wire",
+    "C": "Throw water on them to cool them down",
+    "D": "Scream for help and run away",
     "correct": "B",
     "feedback": {
-      "A": "❌ Sugar spike = crash mode incoming. 🚨",
-      "B": "✅ Brain + body need fuel. 🍎🧠",
-      "C": "❌ You’re not a robot (yet).",
-      "D": "❌ Gym time later, not when woozy. 🏋️‍♂️"
+      "A": "❌ Touching them could complete the circuit—now you're both in danger.",
+      "B": "✅ Wood doesn’t conduct electricity well. It's the safest tool in this emergency.",
+      "C": "❌ Water and electricity? Never mix. That’s a recipe for disaster.",
+      "D": "❌ Help is good, but leaving without acting risks a life."
     }
   },
   {
-    "scenario": "🚽 You find a cleaning chemical bottle without a label. What now?",
-    "A": "Sniff it to guess what it is",
-    "B": "Mix it with bleach and ‘see what happens’",
-    "C": "Leave it alone and tell someone responsible",
-    "D": "Use it anyway, what could go wrong?",
-    "correct": "C",
-    "feedback": {
-      "A": "❌ Sherlock Nose is not a safe method. 🕵️‍♂️👃",
-      "B": "❌ Chemical cocktail = boom 💣",
-      "C": "✅ Unknown = unsafe. Report it. 🧼🧠",
-      "D": "❌ Curiosity killed the lungs."
-    }
-  },
-  {
-    "scenario": "💧 Your little cousin is about to stick a fork into a toaster. What do you do?",
-    "A": "Yell and scare them into freezing",
-    "B": "Unplug the toaster and explain calmly",
-    "C": "Let them learn the hard way",
-    "D": "Record it for viral content",
+    "scenario": "🌪️ A tornado is approaching, and you're in a car. What's the most logical choice?",
+    "A": "Drive away in the opposite direction",
+    "B": "Abandon your car and lie in a ditch",
+    "C": "Park under a bridge",
+    "D": "Stay inside with seatbelt on",
     "correct": "B",
     "feedback": {
-      "A": "❌ Scared kids = clumsy accidents. 😱",
-      "B": "✅ Unplug + explain = true guardian mode.",
-      "C": "❌ Not the time for natural consequences.",
-      "D": "❌ Safety > views. 📵"
+      "A": "❌ Tornadoes can shift direction or outrun you. It’s not safe.",
+      "B": "✅ Ditches offer lower ground where debris is less likely to hit. Cover your head.",
+      "C": "❌ Bridges become wind tunnels. Very risky during tornadoes.",
+      "D": "❌ Cars can flip or collapse. They’re not safe shelters in tornadoes."
     }
   },
   {
-    "scenario": "🧨 You find an old box labeled ‘fireworks’ in your attic. What now?",
-    "A": "Light one to see if it still works",
-    "B": "Open and shake it to check the sound",
-    "C": "Take it outside and call local authorities",
-    "D": "Sell it online as ‘vintage boom’",
+    "scenario": "🔥 There's a fire in the building, and you're on the third floor. What’s the safest exit strategy?",
+    "A": "Use the elevator for speed",
+    "B": "Jump from the window onto bushes",
+    "C": "Check the stairwell for smoke and heat, then exit through it",
+    "D": "Break a window for ventilation before deciding",
     "correct": "C",
     "feedback": {
-      "A": "❌ Flashback to ‘kaboom’. 🎆",
-      "B": "❌ Rattling explosives? Risky business.",
-      "C": "✅ Better safe than sky-high. 🧨🛑",
-      "D": "❌ Illegal and dumb. 🚓"
+      "A": "❌ Elevators might fail or fill with smoke. Avoid them in fires.",
+      "B": "❌ A jump from the third floor can cause severe injuries or worse.",
+      "C": "✅ Stairwells, if smoke-free, are safest. Always check for heat before opening doors.",
+      "D": "❌ Breaking windows feeds fire oxygen. Not smart indoors."
     }
   },
   {
-    "scenario": "🌡️ Your friend has heatstroke symptoms after a trek. What’s wrong to do?",
-    "A": "Pour cold water over them",
-    "B": "Give them ice cubes to eat fast",
-    "C": "Move them to shade and cool them gradually",
-    "D": "Fan them gently while loosening clothing",
+    "scenario": "🚑 Your friend is bitten by a snake of unknown type. What should you *not* do?",
+    "A": "Keep them calm and still",
+    "B": "Try to suck the venom out",
+    "C": "Call emergency services immediately",
+    "D": "Keep the bitten limb below heart level",
     "correct": "B",
     "feedback": {
-      "A": "✅ Not ideal, but better than nothing.",
-      "B": "❌ Cold shock = bad idea. 🚫",
-      "C": "✅ Gradual cooling = winning move. 🧊",
-      "D": "✅ Gentle fanning = smart plan. 🪭"
+      "A": "✅ Less movement slows the spread of venom. Smart.",
+      "B": "❌ Sucking venom doesn’t help and might cause more damage.",
+      "C": "✅ Fast medical attention is critical. Good call.",
+      "D": "✅ Keeping the limb low delays venom travel. Essential."
     }
   },
   {
-    "scenario": "🔌 Your laptop charger sparks when plugged in. What now?",
-    "A": "Plug it again harder",
-    "B": "Blow on the socket like a Nintendo cartridge",
-    "C": "Unplug it and replace the charger",
-    "D": "Ignore it. It still charges, right?",
+    "scenario": "🌊 A tsunami alert is issued while you’re at the beach. What should you do immediately?",
+    "A": "Wait for visual confirmation of waves",
+    "B": "Climb a nearby tree",
+    "C": "Run inland to higher ground",
+    "D": "Drive along the shore to escape",
     "correct": "C",
     "feedback": {
-      "A": "❌ More force = more sparks. 🧨",
-      "B": "❌ It’s not the 90s, nor a console. 😂",
-      "C": "✅ Sparky things don’t belong indoors. ⚠️",
-      "D": "❌ Until it explodes in your face. 💥"
+      "A": "❌ Waiting wastes precious seconds. Tsunamis move faster than you think.",
+      "B": "❌ Trees may not withstand tsunami forces. You need altitude and distance.",
+      "C": "✅ Heading to higher ground quickly gives you the best chance to survive. Go!",
+      "D": "❌ Roads can be jammed or flood-prone. Inland and uphill is safer."
     }
   },
   {
-    "scenario": "🛁 You slip in the bathroom and bang your head. What’s the least helpful move?",
-    "A": "Call someone for help",
-    "B": "Get up immediately and walk it off",
-    "C": "Lie down and check for dizziness",
-    "D": "Make sure you're not bleeding",
+    "scenario": "🧪 You accidentally spill an unknown chemical on your skin in the lab. What’s your first step?",
+    "A": "Wipe it off with a towel",
+    "B": "Use hand sanitizer to neutralize it",
+    "C": "Flush with water for at least 15 minutes",
+    "D": "Ignore it if it doesn’t burn",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Wiping may spread the chemical. Not smart.",
+      "B": "❌ Never mix unknown chemicals. You could make it worse.",
+      "C": "✅ Water dilutes and washes away chemicals. Time matters!",
+      "D": "❌ Damage can occur even without pain. Always rinse first."
+    }
+  },
+  {
+    "scenario": "🚗 Your brakes fail while going downhill. What should you do first?",
+    "A": "Pull the handbrake instantly",
+    "B": "Shift to a lower gear and pump brakes",
+    "C": "Turn off the engine",
+    "D": "Jump out of the vehicle",
     "correct": "B",
     "feedback": {
-      "A": "✅ Help is good.",
-      "B": "❌ Brain needs a status check. 🧠",
-      "C": "✅ Smart. Don’t rush it.",
-      "D": "✅ Always check for bleeding! 🚑"
+      "A": "❌ Handbrakes can lock wheels and cause skidding.",
+      "B": "✅ Lower gears slow the car naturally. Pumping may help regain brake pressure.",
+      "C": "❌ You’ll lose steering and power assist. Not helpful.",
+      "D": "❌ Jumping is a last resort. Control the vehicle first."
     }
   },
   {
-    "scenario": "⚠️ You notice a strange burning smell in your room but no smoke. First move?",
-    "A": "Ignore it, maybe it's your neighbor cooking",
-    "B": "Sniff around like a hound",
-    "C": "Unplug electronics and investigate safely",
-    "D": "Light incense to mask the smell",
+    "scenario": "📱 Your phone gets an emergency alert for a sudden flash flood. You’re driving. What now?",
+    "A": "Speed up to get past the danger",
+    "B": "Turn around, don’t drown",
+    "C": "Stop and check social media for updates",
+    "D": "Continue, trusting your car's capabilities",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Floodwaters can sweep your car in seconds. Never risk it.",
+      "B": "✅ Even shallow water is deadly. Better safe than stranded.",
+      "C": "❌ Wasting time online can cost you your life.",
+      "D": "❌ No car is waterproof enough for flash floods."
+    }
+  },
+  {
+    "scenario": "🥶 You’re caught in a blizzard with limited visibility. What's the safest move?",
+    "A": "Keep walking to stay warm",
+    "B": "Find shelter and insulate yourself",
+    "C": "Eat snow to stay hydrated",
+    "D": "Build a fire in the open",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ You risk getting lost or collapsing from exhaustion.",
+      "B": "✅ Shelter + insulation = survival. Stay put and conserve heat.",
+      "C": "❌ Eating snow lowers your body temp. Melt it first.",
+      "D": "❌ Fires are hard to maintain and expose you to wind."
+    }
+  },
+  {
+    "scenario": "⚠️ A strong earthquake hits while you're inside a shopping mall. What’s the safest move?",
+    "A": "Run toward the nearest exit as fast as possible",
+    "B": "Stand under a decorative archway",
+    "C": "Drop next to a sturdy object and cover your head",
+    "D": "Use the elevator to leave quickly",
     "correct": "C",
     "feedback": {
-      "A": "❌ Ignoring = future flames. 🔥",
-      "B": "❌ Nose isn’t a sensor. Be smart.",
-      "C": "✅ Power down, check safely. 🧯",
-      "D": "❌ Masking = delaying disaster. 🚫"
+      "A": "❌ Running increases your risk of being hit by falling objects. Stay put and protect yourself.",
+      "B": "❌ Decorative = unstable. That arch is not your friend.",
+      "C": "✅ Drop, Cover, Hold. Stay near heavy furniture—not under it—to shield yourself from debris.",
+      "D": "❌ Elevators during quakes? That’s a one-way ride to danger."
+    }
+  },
+  {
+    "scenario": "🔋 Your power bank starts overheating and swelling while charging. What should you do?",
+    "A": "Place it in the fridge to cool it",
+    "B": "Throw water on it",
+    "C": "Unplug and place it on a concrete surface away from flammable items",
+    "D": "Wrap it in cloth to absorb heat",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Batteries and fridges don’t mix. You’re just moving the risk.",
+      "B": "❌ Water + electronics = ⚡ + 💥.",
+      "C": "✅ Prevent fire by moving it to a non-flammable area and unplugging it. Smart!",
+      "D": "❌ Insulating heat = worse overheating."
+    }
+  },
+  {
+    "scenario": "🌋 While hiking, you see smoke from a volcano that wasn’t expected to erupt. What do you do?",
+    "A": "Climb to higher ground to get a better view",
+    "B": "Run downhill and move perpendicular to the slope",
+    "C": "Wait to see how bad it gets",
+    "D": "Cover your mouth and walk into a cave",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Lava flows downhill. But gases go up. Don't follow danger.",
+      "B": "✅ Escape laterally and downhill. Volcanoes don’t wait for you to decide.",
+      "C": "❌ Delaying = deadly. Volcanic activity escalates fast.",
+      "D": "❌ Caves might trap gases. That’s a no-go."
+    }
+  },
+  {
+    "scenario": "🧯 You're using a fire extinguisher but the fire keeps spreading. What next?",
+    "A": "Aim higher to hit the flames",
+    "B": "Switch off power/gas source and aim at the fire base",
+    "C": "Keep spraying till it empties",
+    "D": "Try a wet towel instead",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Flames are the result, not the root. Target the base.",
+      "B": "✅ Smart move! Cut the source and aim low where fire begins.",
+      "C": "❌ Mindless spraying = wasted effort.",
+      "D": "❌ Towels help with tiny fires, not spreading ones."
+    }
+  },
+  {
+    "scenario": "🌫️ You’re hiking and suddenly lost in thick fog. What’s your best move?",
+    "A": "Walk downhill assuming civilization is there",
+    "B": "Use your compass/GPS and stay put if unsure",
+    "C": "Shout and walk in circles to find help",
+    "D": "Look for animal tracks and follow them",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Not all paths lead to safety. Could lead to cliffs or rivers.",
+      "B": "✅ Stay calm. Move only if you’re oriented. Let rescuers find you.",
+      "C": "❌ Panicked movement = disorientation.",
+      "D": "❌ You’re not Bear Grylls. Tracks might lead you *into* trouble."
+    }
+  },
+  {
+    "scenario": "🚨 You're at a concert when a panic stampede starts. What's the best survival strategy?",
+    "A": "Push through the crowd in the opposite direction",
+    "B": "Drop low and cover your head",
+    "C": "Move diagonally toward the edge of the crowd flow",
+    "D": "Climb on nearby structures to avoid people",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Fighting the crowd = high risk of falling and injury.",
+      "B": "❌ Staying down makes you more vulnerable.",
+      "C": "✅ Diagonal exit gets you out of the current safely. Go with the flow—smartly.",
+      "D": "❌ Climbing could make you a target or cause falls."
+    }
+  },
+  {
+    "scenario": "💡 During a blackout, your inverter starts emitting a burning smell. What should you do first?",
+    "A": "Touch it to see if it’s hot",
+    "B": "Open it up to check the wires",
+    "C": "Turn it off and unplug it immediately",
+    "D": "Ignore it—it’s probably normal",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Hot = dangerous. Hands off!",
+      "B": "❌ DIY diagnostics can wait. First, stop the current.",
+      "C": "✅ Unplug + switch off = smart. Then assess with caution.",
+      "D": "❌ Burning smells are never normal with electronics."
+    }
+  },
+  {
+    "scenario": "🏖️ You’re swimming in the ocean and feel a strong current pulling you. What should you do?",
+    "A": "Swim directly back to shore",
+    "B": "Fight the current with all your strength",
+    "C": "Float and swim parallel to the shore",
+    "D": "Dive underwater to escape the pull",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Rip currents don’t like straight lines. You’ll exhaust yourself.",
+      "B": "❌ Fighting = fatigue = drowning risk.",
+      "C": "✅ Parallel swimming helps you escape the current safely.",
+      "D": "❌ Going deeper? That’s not how physics works."
+    }
+  },
+  {
+    "scenario": "📦 A suspicious unattended package is found in a crowded metro station. What’s the safest action?",
+    "A": "Open it to check",
+    "B": "Move it to a safe location",
+    "C": "Alert authorities and move people away",
+    "D": "Kick it lightly to test for danger",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Never inspect it yourself. That’s what trained teams are for.",
+      "B": "❌ Moving it could trigger something dangerous.",
+      "C": "✅ Call professionals. Keep others safe. Stay far.",
+      "D": "❌ That’s how accidents become tragedies."
+    }
+  },
+  {
+    "scenario": "🛠️ During a DIY home project, you accidentally drill into a pipe and water starts flooding. What do you do first?",
+    "A": "Seal it with cloth",
+    "B": "Shut off the main water valve",
+    "C": "Call the plumber and wait",
+    "D": "Try to plug it with your hand",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Temporary fixes delay real action.",
+      "B": "✅ Stop the water first. Then fix the rest.",
+      "C": "❌ By the time help arrives, it’s a swimming pool.",
+      "D": "❌ Fingers ≠ plumbing tools. Turn the valve off."
+    }
+  },
+  {
+    "scenario": "🚉 You’re at a train station and someone drops their phone onto the tracks. The train isn’t visible yet. What should you do?",
+    "A": "Quickly jump down and grab it",
+    "B": "Call station staff and alert them",
+    "C": "Wait until the coast is clear, then climb down",
+    "D": "Use a stick to drag it toward you",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Tracks are active zones. One slip = fatal.",
+      "B": "✅ Staff are trained and can disable tracks if needed. Safety first!",
+      "C": "❌ You never know when the train might arrive.",
+      "D": "❌ Even leaning over the edge can lead to accidents."
+    }
+  },
+  {
+    "scenario": "💨 You accidentally knock over a bottle of ammonia in a closed room and it starts to release strong fumes. What should you do?",
+    "A": "Use a cloth to mop it up quickly",
+    "B": "Open all windows and doors and leave the room",
+    "C": "Spray air freshener to mask the smell",
+    "D": "Pour vinegar on it to neutralize it",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Contact = danger. Ammonia fumes are harmful.",
+      "B": "✅ Ventilation reduces risk. Leave while the air clears.",
+      "C": "❌ Masking chemicals with more chemicals? Nope.",
+      "D": "❌ Mixing chemicals can cause toxic reactions."
+    }
+  },
+  {
+    "scenario": "🌁 You're hiking and a thick fog suddenly reduces visibility. What should be your first move?",
+    "A": "Speed up to find the trail before it's gone",
+    "B": "Use your phone flashlight to see farther",
+    "C": "Stop, mark your location, and use a map or GPS",
+    "D": "Shout to locate your group",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Rushing blindly = risk of injury or getting more lost.",
+      "B": "❌ Fog reflects light; flashlights may worsen visibility.",
+      "C": "✅ Smart. Pause, locate, navigate safely.",
+      "D": "❌ Only shout if you’re sure others are nearby—could disorient more."
+    }
+  },
+  {
+    "scenario": "📡 During a storm, your internet and mobile signal are gone. You’re responsible for others. What’s the best move?",
+    "A": "Go outside for better signal",
+    "B": "Rely on battery-powered radio and emergency plans",
+    "C": "Drive to the nearest town",
+    "D": "Panic and try all devices repeatedly",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Going outside during storms = unnecessary risk.",
+      "B": "✅ Radios work offline and are lifesavers in blackouts.",
+      "C": "❌ Roads may be unsafe during storms.",
+      "D": "❌ Panic burns energy and doesn’t solve communication."
+    }
+  },
+  {
+    "scenario": "🌬️ A strong windstorm is approaching. Which item outside your house is most important to secure first?",
+    "A": "Your garden gnome",
+    "B": "Plastic chairs and loose furniture",
+    "C": "Welcome mat",
+    "D": "Potted plants",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Gnomes may be small, but flying chairs hurt more.",
+      "B": "✅ Larger loose items can become projectiles. Secure or move them!",
+      "C": "❌ Low-risk object. Not the top priority.",
+      "D": "❌ They can be dangerous, but not as heavy or aerodynamic as furniture."
+    }
+  },
+  {
+    "scenario": "🧯 You're at a crowded cinema when you smell smoke. What's the best way to react?",
+    "A": "Yell “fire!” and run",
+    "B": "Quietly alert staff and look for exits",
+    "C": "Continue watching until the alarm rings",
+    "D": "Ask the person next to you if they smell it too",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Causing panic can lead to stampedes.",
+      "B": "✅ Stay calm, inform authority, prepare to evacuate.",
+      "C": "❌ Early action saves lives. Don’t wait.",
+      "D": "❌ Confirmation isn’t a plan. Take initiative."
+    }
+  },
+  {
+    "scenario": "🧊 Your refrigerator starts emitting a chemical smell. What's your first step?",
+    "A": "Unplug it and open windows",
+    "B": "Ignore it until it stops",
+    "C": "Open the fridge to check for spoiled food",
+    "D": "Pour water behind it to clean",
+    "correct": "A",
+    "feedback": {
+      "A": "✅ Smart. Unplug + ventilate = reduce exposure risk.",
+      "B": "❌ Delay can worsen gas exposure.",
+      "C": "❌ Smell may not be food-related. Safety first.",
+      "D": "❌ Water and electrical appliances? Not a good combo."
+    }
+  },
+  {
+    "scenario": "🚧 You're helping a friend move when you notice a strong gas smell near their kitchen. What’s your action?",
+    "A": "Turn on the fan to ventilate",
+    "B": "Switch on the lights to see better",
+    "C": "Tell them and get everyone outside immediately",
+    "D": "Use incense to mask the odor",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Any electrical appliance can trigger a spark.",
+      "B": "❌ Light switches = possible ignition.",
+      "C": "✅ Evacuate fast and call for help. Gas leaks are serious.",
+      "D": "❌ Flames + gas = instant boom."
+    }
+  },
+  {
+    "scenario": "🧱 An earthquake strikes while you’re at a museum with glass displays. What should you do?",
+    "A": "Run toward the exit immediately",
+    "B": "Take cover under a sturdy bench or table away from glass",
+    "C": "Hide beside a tall shelf for cover",
+    "D": "Stand in a doorway",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Falling objects and glass make running dangerous.",
+      "B": "✅ Drop, cover, hold—especially away from breakables.",
+      "C": "❌ Tall shelves fall. Avoid them.",
+      "D": "❌ Doorways are less safe than solid cover."
+    }
+  },
+  {
+    "scenario": "📦 You receive a suspicious-looking package at your workplace with no return address. What do you do?",
+    "A": "Open it to see what's inside",
+    "B": "Move it to an empty room just in case",
+    "C": "Inform security and evacuate the area",
+    "D": "Shake it to hear what’s inside",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Curiosity can be dangerous. Stay safe.",
+      "B": "❌ Moving it could trigger something.",
+      "C": "✅ Alerting authorities and clearing space protects everyone.",
+      "D": "❌ Definitely not. Handling suspicious packages = huge risk."
+    }
+  },
+  {
+    "scenario": "🛫 During a flight, you hear a loud pop and the oxygen masks drop. What's the correct move?",
+    "A": "Help others before putting on your mask",
+    "B": "Scream and brace for impact",
+    "C": "Put on your mask first, then assist others",
+    "D": "Hold your breath and wait for instructions",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ If you're unconscious, you can’t help anyone.",
+      "B": "❌ Panic clouds thinking. Follow procedure.",
+      "C": "✅ Oxygen first. You're no use to others if you pass out.",
+      "D": "❌ Holding breath won’t help with cabin pressure drop."
+    }
+  },
+  {
+    "scenario": "🌫️ You’re driving through thick wildfire smoke on the highway. What’s the safest action?",
+    "A": "Speed through to escape the smoke",
+    "B": "Turn on headlights, slow down, and close windows",
+    "C": "Stop your car immediately",
+    "D": "Turn on the hazard lights and keep driving fast",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Speeding in low visibility = disaster.",
+      "B": "✅ Slow, steady, sealed. Visibility and air quality matter.",
+      "C": "❌ Stopping can lead to rear-end collisions.",
+      "D": "❌ Hazard lights won’t prevent crash at high speed."
+    }
+  },
+  {
+    "scenario": "🌡️ Your city issues a severe heatwave warning. What’s the best preparation?",
+    "A": "Stock up on coffee and soda for energy",
+    "B": "Keep blinds open to get more light",
+    "C": "Store water, avoid outdoor activities, and close curtains",
+    "D": "Take long walks during sunset to stay active",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Caffeine dehydrates. Stick with water.",
+      "B": "❌ Sunlight heats up interiors. Keep it out.",
+      "C": "✅ Hydrate, shade, and stay cool = best combo.",
+      "D": "❌ Physical activity in heat = high risk of heatstroke."
+    }
+  },
+  {
+    "scenario": "🪟 You hear breaking glass downstairs at night. What should you do first?",
+    "A": "Shout loudly to scare the intruder",
+    "B": "Grab a flashlight and investigate",
+    "C": "Lock your door, stay quiet, and call emergency services",
+    "D": "Jump out the window to escape",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Yelling may escalate things. Don’t risk it.",
+      "B": "❌ Never confront intruders. You don’t know their intent.",
+      "C": "✅ Secure, silent, and smart. Let professionals handle it.",
+      "D": "❌ Only escape if you're truly trapped."
+    }
+  },
+  {
+    "scenario": "🚦 All traffic lights at an intersection are out during a power cut. What's the rule?",
+    "A": "Whichever car moves first has right of way",
+    "B": "Treat it like a four-way stop",
+    "C": "Proceed at full speed to avoid delay",
+    "D": "Follow the car in front of you",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ That causes chaos. No rules = no safety.",
+      "B": "✅ Everyone takes turns like a stop sign. Simple and safe.",
+      "C": "❌ Speeding into intersections = collision risk.",
+      "D": "❌ Blind following won’t save you from a crash."
+    }
+  },
+  {
+    "scenario": "🌋 You're hiking near a volcano that starts rumbling and emitting ash. What’s the most logical response?",
+    "A": "Head uphill to see what’s going on",
+    "B": "Run toward the crater to record a video",
+    "C": "Move downhill and cover your nose and mouth",
+    "D": "Wait and see if the tremor stops",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Curiosity here could get you buried. Lava flows and ash clouds move fast.",
+      "B": "❌ You’re not a documentarian — evacuate first, go viral later.",
+      "C": "✅ Move away fast, downhill. Ash inhalation is dangerous, so cover your face too.",
+      "D": "❌ Delay can be deadly. Act early when nature sends warnings."
+    }
+  },
+  {
+    "scenario": "📦 During an earthquake, you’re indoors and see shelves about to fall. What’s the smartest move?",
+    "A": "Run outside immediately",
+    "B": "Hide next to a sturdy table or couch",
+    "C": "Stand in a doorway",
+    "D": "Try to catch the falling items",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Running during shaking exposes you to falling debris.",
+      "B": "✅ Duck, cover, and hold beside strong furniture. It's safer than fleeing.",
+      "C": "❌ Doorways aren’t always reinforced and can swing dangerously.",
+      "D": "❌ You're not a superhero. Prioritize self-protection over objects."
+    }
+  },
+  {
+    "scenario": "☣️ A chemical truck spills on the road ahead. What’s your safest option?",
+    "A": "Hold your breath and run past it",
+    "B": "Drive through quickly before traffic builds",
+    "C": "Turn around and leave the area immediately",
+    "D": "Stop nearby and record the event",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Holding your breath won't protect against unknown fumes.",
+      "B": "❌ Driving through exposes you and your vehicle to dangerous toxins.",
+      "C": "✅ Evacuate fast. Chemical spills are unpredictable and highly toxic.",
+      "D": "❌ Safety first — you can’t post if you’re poisoned."
+    }
+  },
+  {
+    "scenario": "🧊 You fall through thin ice on a frozen lake. What's your immediate action?",
+    "A": "Swim down and try to exit from under the ice",
+    "B": "Kick to get vertical, face the hole, and pull out using your elbows",
+    "C": "Roll underwater to a random direction and try again",
+    "D": "Wait for someone to notice and help",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Swimming deeper risks disorientation and drowning.",
+      "B": "✅ Elbows and belly help distribute weight. Stay horizontal to avoid breaking more ice.",
+      "C": "❌ Directionless movement wastes energy and time.",
+      "D": "❌ Every second counts. Self-rescue is critical here."
+    }
+  },
+  {
+    "scenario": "⚠️ You see a downed power line after a storm. It’s not sparking. What should you assume?",
+    "A": "It’s dead — safe to step over",
+    "B": "Call authorities and stay at least 10 meters away",
+    "C": "Touch it with a stick to check",
+    "D": "Drag it off the road with gloves",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Live wires don’t always spark. Invisible danger is still danger.",
+      "B": "✅ Stay far and report. Only professionals should approach it.",
+      "C": "❌ Even sticks can conduct if damp. Don’t risk it.",
+      "D": "❌ Gloves won’t protect you. It’s not worth your life."
+    }
+  },
+  {
+    "scenario": "🏗️ You’re in an underground metro station when an earthquake starts. What should you do?",
+    "A": "Run up the escalator immediately",
+    "B": "Lie down near the tracks",
+    "C": "Stay away from walls and hold a central column",
+    "D": "Try to exit through emergency stairs",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Moving stairs during tremors = injury risk.",
+      "B": "❌ Tracks are unsafe — electrocution and falling hazards.",
+      "C": "✅ Stay put and protect yourself. Central columns are more structurally sound.",
+      "D": "❌ Don’t rush out. Falling debris could block exits."
+    }
+  },
+  {
+    "scenario": "🚿 You hear water dripping after an earthquake. What should you check for first?",
+    "A": "Broken pipes or gas leaks",
+    "B": "Leaks in the roof",
+    "C": "Neighbors using water",
+    "D": "Check your sink",
+    "correct": "A",
+    "feedback": {
+      "A": "✅ Earthquakes can rupture water or gas lines. Check both immediately.",
+      "B": "❌ The roof can wait — focus on immediate hazards first.",
+      "C": "❌ Assume danger until confirmed safe.",
+      "D": "❌ Sink isn’t your main worry in a quake."
+    }
+  },
+  {
+    "scenario": "📻 A nuclear warning alert is issued in your city. What’s the *first* action?",
+    "A": "Drive to another city",
+    "B": "Go outside to check for signs",
+    "C": "Seek immediate indoor shelter and close all openings",
+    "D": "Call family and plan to meet up",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Roads will be jammed, and radiation travels fast.",
+      "B": "❌ Fallout is invisible. Exposure = danger.",
+      "C": "✅ Indoors, sealed, and shielded — that's how you survive initial fallout.",
+      "D": "❌ Communicate *after* securing yourself."
+    }
+  },
+  {
+    "scenario": "🚒 You’re in a hotel and the fire alarm goes off at 2 AM. There’s light smoke. What should you grab?",
+    "A": "Everything — passport, bags, electronics",
+    "B": "Just your phone and shoes",
+    "C": "Nothing — get out immediately",
+    "D": "Phone, shoes, and room key",
+    "correct": "D",
+    "feedback": {
+      "A": "❌ Delaying for luggage can cost your life.",
+      "B": "❌ No key means if halls fill with smoke, you can’t re-enter safely.",
+      "C": "❌ You'll need to navigate. Shoes matter.",
+      "D": "✅ Key = fallback, shoes = safety, phone = contact. Smart choices."
+    }
+  },
+  {
+    "scenario": "🛰️ A major solar flare hits. Power, GPS, and signals are down. What should be your focus?",
+    "A": "Check your email and wait for updates",
+    "B": "Stay inside and conserve battery power",
+    "C": "Drive to a nearby town for news",
+    "D": "Climb the roof for a better signal",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Internet’s out. Don’t waste time on dead services.",
+      "B": "✅ Solar flares disrupt tech. Conserve power and wait for recovery or radio updates.",
+      "C": "❌ GPS won’t work, and driving could be dangerous without traffic control.",
+      "D": "❌ Signal’s down everywhere. Avoid unnecessary risks."
+    }
+  },
+  {
+    "scenario": "📦 While volunteering at a disaster relief center, you notice a fellow volunteer showing signs of confusion and slurred speech. What’s your first move?",
+    "A": "Offer them food — they might be tired",
+    "B": "Have them sit down and rest it off",
+    "C": "Suspect stroke and call medical staff immediately",
+    "D": "Ignore it, thinking they're just overworked",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Food doesn’t fix a stroke. Seconds matter — act fast.",
+      "B": "❌ Rest isn’t the cure here. Delay could lead to permanent damage.",
+      "C": "✅ These are red flags for stroke. Call help — time is brain.",
+      "D": "❌ Don’t assume. In disaster zones, every symptom deserves attention."
+    }
+  },
+  {
+    "scenario": "🚨 In a crowded train station, someone yells 'bomb!' and panic erupts. What's your best course of action?",
+    "A": "Run immediately with the crowd",
+    "B": "Drop low, observe exits, and move calmly toward the edge",
+    "C": "Take out your phone and record",
+    "D": "Climb to a high place to get a better view",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Stampedes cause more injuries than threats. Stay sharp.",
+      "B": "✅ Stay low, stay aware. Controlled movement saves lives.",
+      "C": "❌ Phone down — survive first, report later.",
+      "D": "❌ High places make you more exposed and unstable."
+    }
+  },
+  {
+    "scenario": "🛠️ During a community rebuilding effort, someone cuts their leg on metal debris. What’s the most critical concern?",
+    "A": "How deep the cut is",
+    "B": "If they have a tetanus shot",
+    "C": "Cleaning it with water and covering it",
+    "D": "Telling them to walk it off",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Depth matters, but tetanus risk is urgent.",
+      "B": "✅ Rusty or dirty metal? Tetanus protection is critical.",
+      "C": "❌ Cleaning helps, but won’t prevent infection alone.",
+      "D": "❌ Bad advice. Infection doesn’t care about toughness."
+    }
+  },
+  {
+    "scenario": "📉 After a major earthquake, your city experiences a power blackout. Which is the wisest prep use of remaining phone battery?",
+    "A": "Binge news on Twitter/X",
+    "B": "Check messages from friends constantly",
+    "C": "Turn on battery saver and use radio or emergency apps only",
+    "D": "Keep flashlight app open at all times",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Social media drains battery fast. You’re not doomscrolling today.",
+      "B": "❌ Constant use = faster drain. Prioritize power.",
+      "C": "✅ Limit use. Emergency alerts and battery-saving = smart survival.",
+      "D": "❌ Flashlight should be used only when necessary."
+    }
+  },
+  {
+    "scenario": "💊 A flood isolates your neighborhood. A diabetic neighbor is running out of insulin. What’s the most responsible action?",
+    "A": "Attempt to swim to the pharmacy",
+    "B": "Call emergency services and alert community groups",
+    "C": "Tell them to ration the remaining insulin",
+    "D": "Offer them sugary drinks to stabilize",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Swimming in floodwater? Disease + risk = no go.",
+      "B": "✅ Coordination saves lives. Reach out to responders.",
+      "C": "❌ Rationing can be dangerous without guidance.",
+      "D": "❌ Sugar doesn’t solve insulin shortage. It could harm them."
+    }
+  },
+  {
+    "scenario": "🛰️ A cyberattack knocks out ATMs, GPS, and mobile banking. What’s the most practical preparation?",
+    "A": "Withdraw cash regularly and keep small denominations at home",
+    "B": "Store gold and valuables for trade",
+    "C": "Rely on credit cards for all purchases",
+    "D": "Wait for services to be restored",
+    "correct": "A",
+    "feedback": {
+      "A": "✅ Cash is king when digital systems fail. Be prepared for offline transactions.",
+      "B": "❌ Gold isn't practical for daily needs. Focus on immediate survival.",
+      "C": "❌ Credit card systems rely on network connectivity, which would be down.",
+      "D": "❌ Waiting isn't a strategy. Proactive preparation is key."
+    }
+  },
+  {
+    "scenario": "🚶 You're caught in a sudden dust storm while driving on a rural road. What's the safest immediate action?",
+    "A": "Speed up to get out of the storm quickly",
+    "B": "Pull over to the side of the road, turn off lights, and wait",
+    "C": "Turn on your high beams and continue driving slowly",
+    "D": "Turn on hazard lights and continue driving at normal speed",
+    "correct": "B",
+    "feedback": {
+      "A": "❌ Speeding in zero visibility is extremely dangerous and can lead to multi-car accidents.",
+      "B": "✅ Pulling over safely, turning off lights (so others don't follow your taillights into the dust), and waiting for visibility to improve is the safest approach.",
+      "C": "❌ High beams reflect off dust and worsen visibility. Low beams are better if you must drive slowly.",
+      "D": "❌ Driving at normal speed in a dust storm is reckless. Hazard lights are good, but stopping is safer."
+    }
+  },
+  {
+    "scenario": "🏠 Your home's carbon monoxide detector goes off. What should you do first?",
+    "A": "Open windows to air out the house and re-test",
+    "B": "Assume it's a false alarm and reset the detector",
+    "C": "Evacuate everyone immediately and call emergency services from outside",
+    "D": "Check all gas appliances for leaks",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Opening windows is a secondary step; immediate evacuation is crucial due to the invisible and odorless nature of CO.",
+      "B": "❌ Never assume a CO alarm is false. It could be deadly.",
+      "C": "✅ Carbon monoxide is a silent killer. Evacuate everyone immediately to fresh air and call for professional help.",
+      "D": "❌ Checking appliances puts you at prolonged risk inside a potentially contaminated environment."
+    }
+  },
+  {
+    "scenario": "🌲 You're camping and a sudden, strong thunderstorm rolls in with lightning. What's the safest place to take shelter?",
+    "A": "Under a tall, isolated tree",
+    "B": "Inside your tent with metal poles",
+    "C": "In a ditch or low-lying area away from tall objects",
+    "D": "On top of a hill for a clear view",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Tall, isolated trees are prime targets for lightning strikes.",
+      "B": "❌ Tents offer no lightning protection, and metal poles can conduct electricity.",
+      "C": "✅ Low-lying areas away from tall objects reduce your risk of being struck by lightning.",
+      "D": "❌ Being on high ground makes you the tallest object and thus a target for lightning."
+    }
+  },
+  {
+    "scenario": "🛒 You're at a grocery store and the lights flicker, then go out completely. What should you do?",
+    "A": "Continue shopping with your phone flashlight",
+    "B": "Head directly to the checkout line to pay",
+    "C": "Move calmly toward the nearest exit and assist others if needed",
+    "D": "Wait in place for the lights to come back on",
+    "correct": "C",
+    "feedback": {
+      "A": "❌ Continuing to shop in a blackout is impractical and unsafe, as emergency exits or hazards might be obscured.",
+      "B": "❌ Checkout systems may be down, and trying to pay can cause congestion at exits.",
+      "C": "✅ During a blackout, the priority is to safely exit the building in case of further emergencies or security issues.",
+      "D": "❌ Waiting in place prolongs potential exposure to unknown risks if the blackout is part of a larger incident."
     }
   }
 ]
